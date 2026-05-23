@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+  html, body {
+    font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+    background: #F4FFF9;
+    color: #2D2D3A;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@layer components {
+
+  /* ── 앱 컨테이너 ── */
+  .app-container {
+    @apply max-w-md mx-auto w-full min-h-screen flex flex-col relative overflow-hidden;
+    background: linear-gradient(160deg, #F4FFF9 0%, #EBF8FF 55%, #F5F0FF 100%);
+  }
+
+  /* ── 마법 배경 장식 ── */
+  .magic-bg-deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .magic-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.35;
+  }
+
+  /* ── Glassmorphism 카드 ── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(98,214,178,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  }
+  .glass-card:active { transform: scale(0.97); }
+
+  /* ── 젤리 버튼 (기본 / 민트) ── */
+  .jelly-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 58px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s cubic-bezier(0.175,0.885,0.32,1.275), box-shadow 0.15s ease;
+    background: linear-gradient(135deg, #62D6B2, #3EC99A);
+    color: #fff;
+    box-shadow: 0 6px 0 #28A87A, 0 8px 20px rgba(98,214,178,0.4);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .jelly-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent);
+    border-radius: 20px 20px 0 0;
+  }
+  .jelly-btn:active {
+    transform: translateY(4px) scale(0.97);
+    box-shadow: 0 2px 0 #28A87A, 0 4px 12px rgba(98,214,178,0.3);
+  }
+
+  /* 보라색 젤리 버튼 */
+  .jelly-btn-purple {
+    background: linear-gradient(135deg, #C9B6FF, #A891FF);
+    box-shadow: 0 6px 0 #7B5FCC, 0 8px 20px rgba(201,182,255,0.45);
+  }
+  .jelly-btn-purple:active {
+    box-shadow: 0 2px 0 #7B5FCC, 0 4px 12px rgba(201,182,255,0.3);
+  }
+
+  /* 노랑 젤리 버튼 */
+  .jelly-btn-yellow {
+    background: linear-gradient(135deg, #FFE58F, #F6D060);
+    color: #5A4200;
+    text-shadow: none;
+    box-shadow: 0 6px 0 #C9A020, 0 8px 20px rgba(255,229,143,0.5);
+  }
+  .jelly-btn-yellow:active {
+    box-shadow: 0 2px 0 #C9A020, 0 4px 12px rgba(255,229,143,0.35);
+  }
+
+  /* 분홍 젤리 버튼 */
+  .jelly-btn-pink {
+    background: linear-gradient(135deg, #FFC7D9, #FF99BB);
+    color: #7A1040;
+    text-shadow: none;
+    box-shadow: 0 6px 0 #CC5580, 0 8px 20px rgba(255,153,187,0.45);
+  }
+  .jelly-btn-pink:active {
+    box-shadow: 0 2px 0 #CC5580, 0 4px 12px rgba(255,153,187,0.3);
+  }
+
+  /* 아웃라인 젤리 버튼 */
+  .jelly-btn-outline {
+    background: rgba(255,255,255,0.85);
+    color: #62D6B2;
+    border: 2.5px solid #62D6B2;
+    box-shadow: 0 6px 0 #A8EDD8, 0 8px 20px rgba(98,214,178,0.2);
+  }
+  .jelly-btn-outline:active {
+    box-shadow: 0 2px 0 #A8EDD8, 0 4px 12px rgba(98,214,178,0.15);
+  }
+
+  /* 기존 코드 호환 */
+  .btn-primary  { @apply jelly-btn w-full; }
+  .btn-secondary { @apply jelly-btn jelly-btn-outline w-full; }
+  .pastel-card  { @apply glass-card p-5; }
+
+  /* ── 숫자 키패드 버튼 ── */
+  .keypad-btn {
+    height: 72px;
+    border-radius: 20px;
+    font-size: 1.9rem;
+    font-weight: 900;
+    cursor: pointer;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: #2D2D3A;
+    box-shadow: 0 5px 0 #C8E8DE, 0 6px 16px rgba(98,214,178,0.15);
+    border: 1.5px solid rgba(255,255,255,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .keypad-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.4), transparent);
+    border-radius: 20px 20px 0 0;
+  }
+  .keypad-btn:active {
+    transform: translateY(4px) scale(0.95);
+    box-shadow: 0 1px 0 #C8E8DE, 0 2px 8px rgba(98,214,178,0.1);
+  }
+
+  /* ── 레벨 배지 ── */
+  .level-badge {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-sm;
+    background: linear-gradient(135deg, #62D6B2, #3EC99A);
+    color: white;
+    box-shadow: 0 3px 10px rgba(98,214,178,0.4);
+  }
+
+  /* ── 스트릭 배지 ── */
+  .streak-badge {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-sm;
+    background: linear-gradient(135deg, #FFE58F, #F6D060);
+    color: #5A4200;
+    box-shadow: 0 3px 10px rgba(255,229,143,0.5);
+  }
+
+  /* ── 프로그레스 바 ── */
+  .progress-bar {
+    @apply h-3 rounded-full overflow-hidden;
+    background: rgba(255,255,255,0.4);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background: linear-gradient(90deg, #62D6B2, #A8D8FF);
+    box-shadow: 0 0 8px rgba(98,214,178,0.5);
+  }
+
+  /* ── 정답/오답 ── */
+  .result-correct {
+    background: rgba(98,214,178,0.15);
+    border: 2px solid #62D6B2;
+    border-radius: 16px;
+  }
+  .result-wrong {
+    background: rgba(255,118,118,0.1);
+    border: 2px solid #FF7676;
+    border-radius: 16px;
+  }
+
+  /* ── 반짝임 커서 ── */
+  .blink-cursor::after {
+    content: '|';
+    animation: blink 1s step-end infinite;
+    color: #62D6B2;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── 보상 팝 애니메이션 ── */
+  .reward-star {
+    animation: starPop 0.6s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+  }
+  @keyframes starPop {
+    0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+    60%  { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  /* ── 떠다니는 별 ── */
+  .floating-star {
+    position: absolute;
+    pointer-events: none;
+    animation: floatStar linear infinite;
+    opacity: 0;
+  }
+  @keyframes floatStar {
+    0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-60px) scale(1); }
+  }
+
+  /* ── 캐릭터 glow ── */
+  .avatar-glow {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 20px rgba(98,214,178,0.6);
+  }
+  .avatar-glow-purple {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.8), 0 0 20px rgba(201,182,255,0.7);
+  }
+}
+
+/* 스크롤바 숨김 */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* 안전 영역 */
+@supports (padding: max(0px)) {
+  .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .safe-top    { padding-top: max(0px, env(safe-area-inset-top)); }
+}
