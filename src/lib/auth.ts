@@ -45,8 +45,6 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
     return () => undefined
   }
 
-  supabase.auth.getUser().then(({ data }) => callback(data.user))
-
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     callback(session?.user ?? null)
   })
