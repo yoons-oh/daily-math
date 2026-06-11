@@ -68,6 +68,29 @@
     }
   }
 
+  /* 홈 메뉴 카드 텍스트 — 카드 너비 기준으로 스케일 */
+  .home-menu-card {
+    container-type: inline-size;
+  }
+
+  .home-card-title {
+    font-weight: 900;
+    line-height: 0.88;
+    white-space: normal;
+    overflow-wrap: break-word;
+    font-size: clamp(0.68rem, 4.2cqw, 1.25rem);
+  }
+
+  .home-card-sub {
+    font-weight: 800;
+    line-height: 0.94;
+    opacity: 0.9;
+    white-space: normal;
+    overflow-wrap: break-word;
+    margin-top: 2px;
+    font-size: clamp(0.48rem, 2.9cqw, 0.88rem);
+  }
+
   @media (min-width: 1024px) {
     .app-container {
       max-width: 1080px;

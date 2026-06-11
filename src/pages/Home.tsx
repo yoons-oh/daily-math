@@ -456,12 +456,8 @@ export default function Home() {
                   className="home-card-text"
                   style={getMenuTextStyle(item.route, item.textColor)}
                 >
-                  <div style={{ fontWeight: 900, fontSize: 'clamp(0.62rem, 1.9vw, 0.84rem)', lineHeight: 0.88, whiteSpace: 'normal', overflowWrap: 'break-word' }}>
-                    {copy.title}
-                  </div>
-                  <div style={{ marginTop: 1, fontWeight: 800, fontSize: 'clamp(0.45rem, 1.35vw, 0.58rem)', lineHeight: 0.94, opacity: 0.9, whiteSpace: 'normal', overflowWrap: 'break-word' }}>
-                    {copy.sub}
-                  </div>
+                  <div className="home-card-title">{copy.title}</div>
+                  <div className="home-card-sub">{copy.sub}</div>
                 </div>
               </motion.button>
               )
