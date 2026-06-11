@@ -1,22 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getCurrentProfile, saveSession, getTodayDate,
-  updateStreak, addReward, appendRateLog
+  updateStreak, appendRateLog, getUserRewardState, saveUserRewardState
 } from '../lib/storage'
-import { ChildProfile, MathQuestion, Operation, PracticeSession, QuestionResult } from '../lib/types'
+import { ChildProfile, MathQuestion, Operation, QuestionResult } from '../lib/types'
 import { generateSession } from '../features/daily-practice/problemGenerator'
-import { calcSessionRewards } from '../lib/rewards'
+import { DailyMathRewardSummary, buildDailyMathRewardSummary } from '../lib/rewards'
 import MathColumnProblem from '../components/MathColumnProblem'
 import VisualSolution from '../components/VisualSolution'
-import RewardPopup from '../components/RewardBadge'
 import MagicBackground from '../components/MagicBackground'
+import HandwritingDigitInput from '../components/HandwritingDigitInput'
 
-import { say, stopAll } from '../lib/tts'
+import { say, stopAll, unlockTts } from '../lib/tts'
+import { playSound, unlockSound } from '../lib/sound'
+import { useI18n } from '../i18n'
 
 const TOTAL = 20
-const KEYPAD_ROWS = [['7','8','9'],['4','5','6'],['1','2','3'],['지우개','0','✅ 정답!']]
+const KEYPAD_ROWS = [['7','8','9'],['4','5','6'],['1','2','3'],['clear','0','submit']]
 
 const CORRECT_MSGS = [
   { emoji: '🌟', title: '완벽해요!',    sub: '정말 대단한 마법사예요!',  tts: '우와! 완벽해요! 정말 대단한 마법사예요!' },
@@ -39,39 +41,133 @@ export default function PracticePage() {
   const operation = (op === 'sub' ? 'sub' : 'add') as Operation
   const navigate  = useNavigate()
   const isAdd     = operation === 'add'
+  const { t } = useI18n()
 
   const [profile, setProfile]     = useState<ChildProfile | null>(null)
   const [questions, setQuestions] = useState<MathQuestion[]>([])
   const [current, setCurrent]     = useState(0)
   const [inputVal, setInputVal]   = useState('')
+  const [digitInputs, setDigitInputs] = useState<string[]>([])
+  const [activeDigitIndex, setActiveDigitIndex] = useState(0)
+  const [answerInputMode, setAnswerInputMode] = useState<'keypad' | 'handwriting'>('keypad')
+  const [showHandwritingWarning, setShowHandwritingWarning] = useState(false)
   const [results, setResults]     = useState<QuestionResult[]>([])
   const [phase, setPhase]         = useState<'input' | 'correct' | 'wrong'>('input')
-  const [correctMsg, setCorrectMsg] = useState(CORRECT_MSGS[0])
-  const [wrongMsg, setWrongMsg]     = useState(WRONG_MSGS[0])
+  const [correctMsgIndex, setCorrectMsgIndex] = useState(0)
+  const [wrongMsgIndex, setWrongMsgIndex]     = useState(0)
   const [currentResult, setCurrentResult] = useState<QuestionResult | null>(null)
-  const [showReward, setShowReward]       = useState(false)
-  const [earnedRewards, setEarnedRewards] = useState<ReturnType<typeof calcSessionRewards>>([])
 
   const startTimeRef  = useRef(Date.now())
   const questionStart = useRef(Date.now())
+  const submitLockRef = useRef(false)
 
   useEffect(() => {
     const p = getCurrentProfile()
     if (!p) { navigate('/profiles'); return }
     setProfile(p)
     setQuestions(generateSession(p.currentLevel, operation))
+    playSound('magic')
     startTimeRef.current = Date.now()
     questionStart.current = Date.now()
   }, [])
 
   const q = questions[current]
   const progressPct = Math.round((current / TOTAL) * 100)
+  const answerSlotCount = q
+    ? Math.max(String(q.num1).length, String(q.num2).length, String(q.answer).length)
+    : 1
+  const useDigitSlots = Boolean(profile && profile.currentLevel !== 'L1' && answerSlotCount > 1)
+  const useHandwriting = useDigitSlots && answerInputMode === 'handwriting'
+  const handwritingAnswer = digitInputs.join('')
+  const displayedInput = useDigitSlots ? handwritingAnswer : inputVal
+  const hasCompleteDigitSlots = (inputs: string[]) => {
+    const firstWrittenDigit = inputs.findIndex(Boolean)
+    return (
+      inputs.length === answerSlotCount &&
+      firstWrittenDigit >= 0 &&
+      inputs.slice(firstWrittenDigit).every(Boolean)
+    )
+  }
+  const canSubmitDigitSlots = useDigitSlots && hasCompleteDigitSlots(digitInputs)
+  const correctMessages = useMemo(() => [
+    { emoji: '🌟', title: t('practice.correct1Title'), sub: t('practice.correct1Sub'), tts: t('practice.correct1Tts') },
+    { emoji: '✨', title: t('practice.correct2Title'), sub: t('practice.correct2Sub'), tts: t('practice.correct2Tts') },
+    { emoji: '🎉', title: t('practice.correct3Title'), sub: t('practice.correct3Sub'), tts: t('practice.correct3Tts') },
+    { emoji: '🏆', title: t('practice.correct4Title'), sub: t('practice.correct4Sub'), tts: t('practice.correct4Tts') },
+    { emoji: '🚀', title: t('practice.correct5Title'), sub: t('practice.correct5Sub'), tts: t('practice.correct5Tts') },
+  ], [t])
+  const wrongMessages = useMemo(() => [
+    { emoji: '🌈', title: t('practice.wrong1Title'), sub: t('practice.wrong1Sub') },
+    { emoji: '💪', title: t('practice.wrong2Title'), sub: t('practice.wrong2Sub') },
+    { emoji: '🌱', title: t('practice.wrong3Title'), sub: t('practice.wrong3Sub') },
+    { emoji: '💡', title: t('practice.wrong4Title'), sub: t('practice.wrong4Sub') },
+    { emoji: '🌙', title: t('practice.wrong5Title'), sub: t('practice.wrong5Sub') },
+  ], [t])
+  const correctMsg = correctMessages[correctMsgIndex] ?? correctMessages[0]
+  const wrongMsg = wrongMessages[wrongMsgIndex] ?? wrongMessages[0]
+
+  useEffect(() => {
+    if (!q) return
+    const slots = Math.max(String(q.num1).length, String(q.num2).length, String(q.answer).length)
+    setDigitInputs(Array(slots).fill(''))
+    setActiveDigitIndex(slots - 1)
+    setInputVal('')
+    setAnswerInputMode('keypad')
+    setShowHandwritingWarning(false)
+    submitLockRef.current = false
+  }, [q?.id])
+
+  function getDigitLabel(index: number) {
+    const placeFromRight = answerSlotCount - index
+    if (placeFromRight === 1) return t('practice.onesPlace')
+    if (placeFromRight === 2) return t('practice.tensPlace')
+    if (placeFromRight === 3) return t('practice.hundredsPlace')
+    return t('practice.nthPlace', { count: placeFromRight })
+  }
+
+  function handleDigitRecognized(digit: string) {
+    unlockSound()
+    playSound('tap')
+    setDigitInputs(prev => {
+      const next = [...prev]
+      next[activeDigitIndex] = digit
+      setInputVal(next.join(''))
+      return next
+    })
+  }
+
+  function handleClearActiveDigit() {
+    setDigitInputs(prev => {
+      const next = [...prev]
+      next[activeDigitIndex] = ''
+      setInputVal(next.join(''))
+      return next
+    })
+  }
 
   function handleKey(k: string) {
     if (phase !== 'input') return
-    if (k === '지우개') {
+    unlockSound()
+    playSound(k.length > 1 ? 'magic' : 'tap')
+    if (useDigitSlots) {
+      if (k === 'clear') {
+        handleClearActiveDigit()
+      } else if (k === 'submit') {
+        handleSubmit()
+      } else {
+        setDigitInputs(prev => {
+          const next = [...prev]
+          next[activeDigitIndex] = k
+          setInputVal(next.join(''))
+          return next
+        })
+        if (activeDigitIndex > 0) setActiveDigitIndex(activeDigitIndex - 1)
+      }
+      return
+    }
+    if (k === 'clear') {
       setInputVal(v => v.slice(0, -1))
-    } else if (k === '✅ 정답!') {
+    } else if (k === 'submit') {
       if (inputVal) handleSubmit()
     } else {
       setInputVal(v => {
@@ -82,21 +178,29 @@ export default function PracticePage() {
     }
   }
 
-  function handleSubmit() {
-    if (!q || !inputVal || phase !== 'input') return
-    const userNum = Number(inputVal)
+  async function handleSubmit() {
+    const answerText = useDigitSlots ? digitInputs.map(d => d || '0').join('') : inputVal
+    if (!q || !answerText || phase !== 'input') return
+    if (useDigitSlots && !hasCompleteDigitSlots(digitInputs)) return
+    if (submitLockRef.current) return
+    submitLockRef.current = true
+    await unlockTts()
+    const userNum = Number(answerText)
     const correct = userNum === q.answer
     const elapsed = Math.round((Date.now() - questionStart.current) / 1000)
     setCurrentResult({ question: q, userAnswer: userNum, isCorrect: correct, timeSpentSeconds: elapsed })
 
     if (correct) {
-      const msg = CORRECT_MSGS[Math.floor(Math.random() * CORRECT_MSGS.length)]
-      setCorrectMsg(msg)
+      playSound('correct')
+      const nextIndex = Math.floor(Math.random() * correctMessages.length)
+      const msg = correctMessages[nextIndex]
+      setCorrectMsgIndex(nextIndex)
       setPhase('correct')
       // 칭찬 음성 재생
       say(msg.tts, false)
     } else {
-      setWrongMsg(WRONG_MSGS[Math.floor(Math.random() * WRONG_MSGS.length)])
+      playSound('wrong')
+      setWrongMsgIndex(Math.floor(Math.random() * wrongMessages.length))
       setPhase('wrong')
     }
   }
@@ -107,6 +211,9 @@ export default function PracticePage() {
     const newResults = [...results, currentResult]
     setResults(newResults)
     setInputVal('')
+    setDigitInputs(Array(answerSlotCount).fill(''))
+    setActiveDigitIndex(answerSlotCount - 1)
+    submitLockRef.current = false
     setPhase('input')
     setCurrentResult(null)
     questionStart.current = Date.now()
@@ -125,10 +232,21 @@ export default function PracticePage() {
     })
     const streak = updateStreak(profile.id)
     appendRateLog(profile.id, profile.currentLevel, rate)
-    const rewards = calcSessionRewards(rate, streak, false, false)
-    rewards.forEach(r => addReward(profile.id, r))
-    setEarnedRewards(rewards)
-    setShowReward(true)
+    const rewardState = getUserRewardState(profile.id)
+    const rewardSummary: DailyMathRewardSummary = buildDailyMathRewardSummary(rate, rewardState, getTodayDate())
+    if (!rewardSummary.alreadyRewardedToday) {
+      saveUserRewardState(profile.id, rewardSummary.nextState)
+      playSound('reward')
+    }
+    navigate('/result', {
+      state: {
+        results: finalResults,
+        operation,
+        level: profile.currentLevel,
+        rewardSummary,
+        streakDays: streak.currentStreak,
+      },
+    })
   }
 
   if (!q || !profile) {
@@ -137,7 +255,7 @@ export default function PracticePage() {
         <MagicBackground />
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           style={{ fontSize: '3rem' }}>✨</motion.div>
-        <p style={{ color: '#7A7A9A', marginTop: 12, fontWeight: 700 }}>마법 문제 준비 중...</p>
+        <p style={{ color: '#7A7A9A', marginTop: 12, fontWeight: 700 }}>{t('practice.loading')}</p>
       </div>
     )
   }
@@ -154,16 +272,16 @@ export default function PracticePage() {
         {/* ── 헤더 ── */}
         <div style={{ background: hdrGradient, padding: '16px 16px 12px', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
           <div className="flex items-center justify-between mb-3">
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(-1)}
+            <motion.button type="button" whileTap={{ scale: 0.88 }} onClick={() => { playSound('tap'); navigate(-1) }}
               style={{ width: 42, height: 42, borderRadius: 14, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', border: '1.5px solid rgba(255,255,255,0.9)', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 3px 10px rgba(0,0,0,0.08)' }}>
               ←
             </motion.button>
             <div className="text-center">
               <p style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2D2D3A' }}>
-                {isAdd ? '✨ 덧셈 마법' : '🌙 뺄셈 마법'}
+                {isAdd ? `✨ ${t('home.addMagic')}` : `🌙 ${t('home.subMagic')}`}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#7A7A9A', fontWeight: 700 }}>
-                {current + 1} / {TOTAL} 문제
+                {t('practice.problemCounter', { current: current + 1, total: TOTAL })}
               </p>
             </div>
             <div style={{
@@ -191,8 +309,17 @@ export default function PracticePage() {
                 initial={{ opacity: 0, x: 48 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -48 }}
                 transition={{ duration: 0.22 }}
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="glass-card" style={{ width: '100%', padding: '24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.82)' }}>
-                  <MathColumnProblem question={q} userAnswer={inputVal} showResult={false} isCorrect={false} />
+                <div className="glass-card" style={{ width: '100%', padding: useHandwriting ? '14px 12px' : '24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.82)' }}>
+                  <MathColumnProblem
+                    question={q}
+                    userAnswer={displayedInput}
+                    showResult={false}
+                    isCorrect={false}
+                    compact={useDigitSlots}
+                    handwritingDigits={useDigitSlots ? digitInputs : undefined}
+                    activeDigitIndex={useDigitSlots ? activeDigitIndex : undefined}
+                    onDigitCellClick={useDigitSlots ? setActiveDigitIndex : undefined}
+                  />
                 </div>
               </motion.div>
             )}
@@ -264,10 +391,11 @@ export default function PracticePage() {
             <motion.div
               initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
               transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+              className="practice-feedback-actions"
               style={{ padding: '8px 16px 20px', flexShrink: 0 }}>
-              <motion.button whileTap={{ scale: 0.97, y: 3 }} onClick={goNext}
+              <motion.button type="button" whileTap={{ scale: 0.97, y: 3 }} onClick={() => { playSound('tap'); goNext() }}
                 className="jelly-btn jelly-btn-purple" style={{ width: '100%', fontSize: '1.05rem' }}>
-                {current + 1 >= TOTAL ? '결과 보기 🏆' : '✨ 이제 알았어요!'}
+                {current + 1 >= TOTAL ? t('practice.viewResult') : t('practice.gotIt')}
               </motion.button>
             </motion.div>
           )}
@@ -279,10 +407,11 @@ export default function PracticePage() {
             <motion.div
               initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
               transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+              className="practice-feedback-actions"
               style={{ padding: '8px 16px 20px', flexShrink: 0 }}>
-              <motion.button whileTap={{ scale: 0.97, y: 3 }} onClick={goNext}
+              <motion.button type="button" whileTap={{ scale: 0.97, y: 3 }} onClick={() => { playSound('tap'); goNext() }}
                 className="jelly-btn" style={{ width: '100%', fontSize: '1.05rem' }}>
-                {current + 1 >= TOTAL ? '결과 보기 🏆' : '다음 문제 →'}
+                {current + 1 >= TOTAL ? t('practice.viewResult') : t('practice.nextProblem')}
               </motion.button>
             </motion.div>
           )}
@@ -294,47 +423,144 @@ export default function PracticePage() {
             <motion.div
               initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }}
               transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+              className="practice-input-panel"
               style={{ padding: '4px 14px 12px', flexShrink: 0 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                {KEYPAD_ROWS.flat().map((k, i) => {
-                  const isOk = k === '✅ 정답!', isDel = k === '지우개'
-                  const disabled = isOk && !inputVal
-                  return (
-                    <motion.button key={i} whileTap={{ scale: 0.88, y: 3 }} onClick={() => handleKey(k)} disabled={disabled}
+              {useHandwriting ? (
+                <div className="glass-card" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.82)' }}>
+                  <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:8 }}>
+                    <motion.button
+                      whileTap={{ scale:0.96, y:2 }}
+                      type="button"
+                      onClick={() => setAnswerInputMode('keypad')}
                       style={{
-                        height: 56, borderRadius: 18,
-                        fontSize: isOk ? '0.88rem' : isDel ? '0.9rem' : '1.7rem',
-                        fontWeight: 900, lineHeight: 1.2,
-                        border: (isOk || isDel) ? 'none' : '1.5px solid rgba(255,255,255,0.95)',
-                        cursor: disabled ? 'default' : 'pointer',
-                        position: 'relative', overflow: 'hidden',
-                        opacity: disabled ? 0.4 : 1, transition: 'opacity 0.15s',
-                        background: isOk ? 'linear-gradient(135deg,#62D6B2,#3EC99A)' : isDel ? 'linear-gradient(135deg,#FFC7D9,#FF99BB)' : 'rgba(255,255,255,0.88)',
-                        color: isOk ? '#fff' : isDel ? '#7A1040' : '#2D2D3A',
-                        boxShadow: isOk ? '0 4px 0 #28A87A,0 5px 12px rgba(98,214,178,0.3)' : isDel ? '0 4px 0 #CC5580,0 5px 12px rgba(255,153,187,0.3)' : '0 4px 0 #C8E8DE,0 5px 10px rgba(0,0,0,0.06)',
-                        backdropFilter: 'blur(8px)',
-                      } as React.CSSProperties}>
-                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(180deg,rgba(255,255,255,0.3),transparent)', borderRadius: '18px 18px 0 0', pointerEvents: 'none' }} />
-                      {k}
+                        height:36, padding:'0 14px', borderRadius:12, border:'none',
+                        background:'rgba(98,214,178,0.16)', color:'#238567',
+                        fontWeight:900, fontSize:'0.86rem',
+                      }}
+                    >
+                      {t('practice.keypad')}
                     </motion.button>
-                  )
-                })}
-              </div>
+                  </div>
+                  <HandwritingDigitInput
+                    activeLabel={t('practice.placeInput', { place: getDigitLabel(activeDigitIndex) })}
+                    value={digitInputs[activeDigitIndex] ?? ''}
+                    onRecognized={handleDigitRecognized}
+                    onClearDigit={handleClearActiveDigit}
+                    canSubmit={canSubmitDigitSlots}
+                    onSubmit={handleSubmit}
+                  />
+                </div>
+              ) : (
+                <div className="glass-card" style={{ padding: useDigitSlots ? 10 : 0, background: useDigitSlots ? 'rgba(255,255,255,0.82)' : 'transparent', boxShadow: useDigitSlots ? undefined : 'none', border: useDigitSlots ? undefined : 'none' }}>
+                  {useDigitSlots && (
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, marginBottom:8 }}>
+                      <div style={{ fontWeight:900, color:'#2D2D3A', fontSize:'0.92rem' }}>{t('practice.placeInput', { place: getDigitLabel(activeDigitIndex) })}</div>
+                      <motion.button
+                        whileTap={{ scale:0.96, y:2 }}
+                        type="button"
+                        onClick={() => setShowHandwritingWarning(true)}
+                        style={{
+                          height:36, padding:'0 14px', borderRadius:12, border:'none',
+                          background:'linear-gradient(135deg,#FFE58F,#F6D060)', color:'#5A4200',
+                          fontWeight:900, fontSize:'0.86rem',
+                          boxShadow:'0 3px 0 rgba(90,66,0,0.18)',
+                        }}
+                      >
+                        {t('practice.handwriting')}
+                      </motion.button>
+                    </div>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                    {KEYPAD_ROWS.flat().map((k, i) => {
+                      const isOk = k === 'submit', isDel = k === 'clear'
+                      const label = isOk ? t('practice.submitAnswer') : isDel ? t('practice.clear') : k
+                      const disabled = isOk && (useDigitSlots ? !canSubmitDigitSlots : !inputVal)
+                      return (
+                        <motion.button
+                          key={i}
+                          type="button"
+                          whileTap={{ scale: 0.88, y: 3 }}
+                          onClick={() => handleKey(k)}
+                          aria-disabled={disabled}
+                          style={{
+                            height: useDigitSlots ? 48 : 56, borderRadius: useDigitSlots ? 15 : 18,
+                            fontSize: isOk ? '0.86rem' : isDel ? '0.88rem' : useDigitSlots ? '1.5rem' : '1.7rem',
+                            fontWeight: 900, lineHeight: 1.2,
+                            border: (isOk || isDel) ? 'none' : '1.5px solid rgba(255,255,255,0.95)',
+                            cursor: disabled ? 'default' : 'pointer',
+                            position: 'relative', overflow: 'hidden', touchAction: 'manipulation',
+                            opacity: disabled ? 0.4 : 1, transition: 'opacity 0.15s',
+                            background: isOk ? 'linear-gradient(135deg,#62D6B2,#3EC99A)' : isDel ? 'linear-gradient(135deg,#FFC7D9,#FF99BB)' : 'rgba(255,255,255,0.88)',
+                            color: isOk ? '#fff' : isDel ? '#7A1040' : '#2D2D3A',
+                            boxShadow: isOk ? '0 4px 0 #28A87A,0 5px 12px rgba(98,214,178,0.3)' : isDel ? '0 4px 0 #CC5580,0 5px 12px rgba(255,153,187,0.3)' : '0 4px 0 #C8E8DE,0 5px 10px rgba(0,0,0,0.06)',
+                            backdropFilter: 'blur(8px)',
+                          } as React.CSSProperties}>
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(180deg,rgba(255,255,255,0.3),transparent)', borderRadius: '18px 18px 0 0', pointerEvents: 'none' }} />
+                          {label}
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       <AnimatePresence>
-        {showReward && (
-          <RewardPopup rewards={earnedRewards}
-            onClose={() => {
-              setShowReward(false)
-              navigate('/result', { state: { results, operation, level: profile.currentLevel } })
+        {showHandwritingWarning && (
+          <motion.div
+            initial={{ opacity:0 }}
+            animate={{ opacity:1 }}
+            exit={{ opacity:0 }}
+            style={{
+              position:'fixed', inset:0, zIndex:50, background:'rgba(45,45,58,0.28)',
+              display:'flex', alignItems:'center', justifyContent:'center', padding:20,
+              backdropFilter:'blur(5px)',
             }}
-          />
+          >
+            <motion.div
+              initial={{ scale:0.9, y:16, opacity:0 }}
+              animate={{ scale:1, y:0, opacity:1 }}
+              exit={{ scale:0.94, y:10, opacity:0 }}
+              transition={{ type:'spring', damping:20, stiffness:260 }}
+              className="glass-card"
+              style={{ width:'100%', maxWidth:360, padding:20, background:'rgba(255,255,255,0.94)' }}
+            >
+              <div style={{ fontSize:'2rem', marginBottom:8 }}>✍️</div>
+              <div style={{ fontWeight:900, color:'#2D2D3A', fontSize:'1.12rem', marginBottom:8 }}>{t('practice.handwritingTitle')}</div>
+              <p style={{ color:'#7A7A9A', fontWeight:800, lineHeight:1.45, fontSize:'0.94rem', marginBottom:16 }}>
+                {t('practice.handwritingWarning')}
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                <motion.button
+                  whileTap={{ scale:0.96, y:2 }}
+                  type="button"
+                  onClick={() => setShowHandwritingWarning(false)}
+                  className="jelly-btn jelly-btn-outline"
+                  style={{ fontSize:'0.94rem' }}
+                >
+                  {t('practice.useKeypad')}
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale:0.96, y:2 }}
+                  type="button"
+                  onClick={() => {
+                    setShowHandwritingWarning(false)
+                    setAnswerInputMode('handwriting')
+                  }}
+                  className="jelly-btn"
+                  style={{ fontSize:'0.94rem' }}
+                >
+                  {t('practice.handwriting')}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   )
 }

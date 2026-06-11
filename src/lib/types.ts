@@ -1,4 +1,6 @@
 // ─── 프로필 ──────────────────────────────────────────
+import { SupportedLanguage } from './language'
+
 export interface ChildProfile {
   id: string
   name: string
@@ -6,6 +8,7 @@ export interface ChildProfile {
   avatar: string          // emoji 또는 색상 코드
   currentLevel: Level
   createdAt: string
+  language?: SupportedLanguage
 }
 
 // ─── 레벨 ──────────────────────────────────────────
@@ -69,6 +72,13 @@ export interface Reward {
 export interface StreakInfo {
   currentStreak: number
   longestStreak: number
+  lastCompletedDate: string | null
+}
+
+export interface UserRewardState {
+  coins: number
+  stars: number
+  streakDays: number
   lastCompletedDate: string | null
 }
 

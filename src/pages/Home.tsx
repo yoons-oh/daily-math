@@ -2,253 +2,617 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
-  getCurrentProfile, getStreak, getRewards,
-  isTodayCompleted, getSessionByDate, getTodayDate, setCurrentProfileId
+  getCurrentProfile,
+  getRewards,
+  getSessionByDate,
+  getStreak,
+  getTodayDate,
+  getUserRewardState,
+  isTodayCompleted,
+  saveProfile,
+  setCurrentProfileId,
 } from '../lib/storage'
-import { ChildProfile, StreakInfo, Reward, LEVEL_LABELS } from '../lib/types'
+import { ChildProfile, Level, Reward, StreakInfo, UserRewardState } from '../lib/types'
 import MagicBackground from '../components/MagicBackground'
+import BottomNav from '../components/BottomNav'
+import { playSound, unlockSound } from '../lib/sound'
+import { useI18n, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '../i18n'
+import { consumeAuthSelectedLanguage, SupportedLanguage } from '../lib/language'
+import { updateChildProfileLanguage, updateChildProfileLevel } from '../lib/childProfiles'
 
-const GREETING = () => {
-  const h = new Date().getHours()
-  if (h < 12) return '좋은 아침이에요! ☀️'
-  if (h < 17) return '안녕하세요! 😊'
-  return '저녁도 파이팅! 🌙'
-}
-
-// 캐릭터 이미지 경로
 const CHAR_IMG: Record<string, string> = {
-  rabbit:  '/characters/rabbit.jpg',
-  fox:     '/characters/fox.jpg',
-  bear:    '/characters/bear.jpg',
-  panda:   '/characters/panda.jpg',
-  dragon:  '/characters/dragon.jpg',
-  rion:    '/characters/rion.jpg',
-  car:     '/characters/car.jpg',
-  train:   '/characters/train.jpg',
+  rabbit: '/characters/rabbit.jpg',
+  fox: '/characters/fox.jpg',
+  bear: '/characters/bear.jpg',
+  panda: '/characters/panda.jpg',
+  dragon: '/characters/dragon.jpg',
+  rion: '/characters/rion.jpg',
+  car: '/characters/car.jpg',
+  train: '/characters/train.jpg',
   dragon2: '/characters/dragon2.jpg',
-  unicon:  '/characters/unicon.jpg',
+  unicon: '/characters/unicon.jpg',
 }
+
+const LEVEL_NAMES: Record<Level, string> = {
+  L1: '1단계',
+  L2A: '2단계 A',
+  L2B: '2단계 B',
+  L3A: '3단계 A',
+  L3B: '3단계 B',
+}
+
+const SELECTABLE_LEVELS: Level[] = ['L1', 'L2A', 'L2B', 'L3A', 'L3B']
 
 const MENU_ITEMS = [
-  { emoji:'✨', title:'덧셈 마법',   sub:'오늘 20문제',    gradient:'linear-gradient(135deg,#62D6B2,#3EC99A)', shadow:'0 6px 0 #28A87A,0 8px 20px rgba(98,214,178,0.4)',   route:'/practice/add', deco:'＋' },
-  { emoji:'🌙', title:'뺄셈 마법',   sub:'오늘 20문제',    gradient:'linear-gradient(135deg,#FFC7D9,#FF99BB)', shadow:'0 6px 0 #CC5580,0 8px 20px rgba(255,153,187,0.4)',  route:'/practice/sub', deco:'－' },
-  { emoji:'🔮', title:'마법 배우기', sub:'개념 애니메이션', gradient:'linear-gradient(135deg,#C9B6FF,#A891FF)', shadow:'0 6px 0 #7B5FCC,0 8px 20px rgba(201,182,255,0.4)',  route:'/concept',      deco:'💡' },
-  { emoji:'🏆', title:'보상 창고',   sub:'',               gradient:'linear-gradient(135deg,#FFE58F,#F6D060)', shadow:'0 6px 0 #C9A020,0 8px 20px rgba(255,229,143,0.45)', route:'/rewards',      deco:'⭐', textColor:'#5A4200' },
+  {
+    icon: '🧙‍♂️',
+    title: '덧셈 마법',
+    sub: '오늘 20문제',
+    route: '/practice/add',
+    image: '/home/menu-add.jpg',
+    gradient: 'linear-gradient(135deg, #2FE5C1 0%, #1EC69B 100%)',
+    shadow: '#15A982',
+    glow: 'rgba(47, 229, 193, 0.45)',
+    mark: '+',
+  },
+  {
+    icon: '🌙',
+    title: '뺄셈 마법',
+    sub: '오늘 20문제',
+    route: '/practice/sub',
+    image: '/home/menu-sub.jpg',
+    gradient: 'linear-gradient(135deg, #FFC2DA 0%, #FF8FB9 100%)',
+    shadow: '#D55E8D',
+    glow: 'rgba(255, 143, 185, 0.4)',
+    mark: '-',
+  },
+  {
+    icon: '🧪',
+    title: '마법 배우기',
+    sub: '개념 애니메이션',
+    route: '/concept',
+    image: '/home/menu-concept.jpg',
+    gradient: 'linear-gradient(135deg, #C6A8FF 0%, #9F88FF 100%)',
+    shadow: '#7B61D8',
+    glow: 'rgba(159, 136, 255, 0.42)',
+    mark: '✦',
+  },
+  {
+    icon: '💰',
+    title: '보상 창고',
+    sub: '',
+    route: '/rewards',
+    image: '/home/menu-rewards.jpg',
+    gradient: 'linear-gradient(135deg, #FFE66D 0%, #FFC845 100%)',
+    shadow: '#D6A41E',
+    glow: 'rgba(255, 200, 69, 0.46)',
+    mark: '★',
+    textColor: '#5B3B00',
+  },
 ]
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return '좋은 아침이에요'
+  if (h < 17) return '오늘도 반짝여요'
+  return '마법 연습 시간이에요'
+}
 
 export default function Home() {
   const navigate = useNavigate()
-  const [profile, setProfile]     = useState<ChildProfile | null>(null)
-  const [streak, setStreak]       = useState<StreakInfo | null>(null)
-  const [rewards, setRewards]     = useState<Reward[]>([])
+  const { language, setLanguage, t } = useI18n()
+  const [profile, setProfile] = useState<ChildProfile | null>(null)
+  const [streak, setStreak] = useState<StreakInfo | null>(null)
+  const [rewards, setRewards] = useState<Reward[]>([])
+  const [rewardState, setRewardState] = useState<UserRewardState | null>(null)
   const [todayDone, setTodayDone] = useState(false)
   const [todayStats, setTodayStats] = useState({ correct: 0, total: 0 })
 
   useEffect(() => {
     const p = getCurrentProfile()
-    if (!p) { navigate('/profiles'); return }
-    setProfile(p)
+    if (!p) {
+      navigate('/profiles')
+      return
+    }
+
+    const authLanguage = consumeAuthSelectedLanguage()
+    const nextLanguage = authLanguage ?? p.language ?? language
+
+    if (nextLanguage !== language) {
+      setLanguage(nextLanguage)
+    }
+    if (p.language !== nextLanguage) {
+      const updatedProfile = { ...p, language: nextLanguage }
+      saveProfile(updatedProfile)
+      updateChildProfileLanguage(p.id, nextLanguage).catch(error => {
+        console.warn('Could not sync profile language:', error)
+      })
+      setProfile(updatedProfile)
+    } else {
+      setProfile(p)
+    }
+
     setStreak(getStreak(p.id))
     setRewards(getRewards(p.id))
+    setRewardState(getUserRewardState(p.id))
+
     const done = isTodayCompleted(p.id)
     setTodayDone(done)
     if (done) {
       const sessions = getSessionByDate(p.id, getTodayDate())
-      let correct = 0, total = 0
-      sessions.forEach(s => s.questions.forEach(q => { total++; if (q.isCorrect) correct++ }))
+      let correct = 0
+      let total = 0
+      sessions.forEach(s =>
+        s.questions.forEach(q => {
+          total += 1
+          if (q.isCorrect) correct += 1
+        }),
+      )
       setTodayStats({ correct, total })
     }
-  }, [])
+  }, [language, navigate, setLanguage])
 
   if (!profile) return null
 
-  const starCount    = rewards.filter(r => r.type === 'star').length
-  const stickerCount = rewards.filter(r => r.type === 'sticker').length
-  const badgeCount   = rewards.filter(r => r.type === 'badge').length
-  const charImg      = CHAR_IMG[profile.avatar] ?? null
-
-  const menuItems = MENU_ITEMS.map(m =>
-    m.route === '/rewards' ? { ...m, sub: `별 ${starCount}개` } : m
+  const coinCount = rewardState?.coins ?? 0
+  const starCount = rewardState?.stars ?? rewards.filter(r => r.type === 'star').length
+  const badgeCount = rewards.filter(r => r.type === 'badge').length
+  const charImg = CHAR_IMG[profile.avatar] ?? null
+  const menuItems = MENU_ITEMS.map(item =>
+    item.route === '/rewards' ? { ...item, sub: `별 ${starCount}개` } : item,
   )
+  const getMenuCopy = (route: string) => {
+    if (route === '/practice/add') return { title: t('home.addMagic'), sub: t('home.today20') }
+    if (route === '/practice/sub') return { title: t('home.subMagic'), sub: t('home.today20') }
+    if (route === '/concept') return { title: t('home.learnMagic'), sub: t('home.conceptAnimation') }
+    if (route === '/rewards') return { title: t('home.rewards'), sub: t('home.starsCount', { count: starCount }) }
+    return { title: '', sub: '' }
+  }
+  const getMenuTextStyle = (route: string, textColor?: string): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      position: 'absolute',
+      color: textColor ?? '#FFFFFF',
+      textShadow: textColor ? 'none' : '0 2px 8px rgba(0,0,0,0.24)',
+      pointerEvents: 'none',
+      zIndex: 2,
+    }
+
+    if (route === '/practice/add' || route === '/practice/sub') {
+      return {
+        ...base,
+        left: '17%',
+        right: '17%',
+        bottom: '10%',
+        textAlign: 'center',
+      }
+    }
+
+    if (route === '/rewards') {
+      return {
+        ...base,
+        left: '54%',
+        right: '8%',
+        top: '55%',
+        transform: 'translateY(-50%)',
+        textAlign: 'center',
+        color: '#5B3B00',
+        textShadow: 'none',
+      }
+    }
+
+    return {
+      ...base,
+      left: '7%',
+      right: '14%',
+      bottom: '10%',
+      textAlign: 'left',
+    }
+  }
+  const changeLanguage = (nextLanguage: SupportedLanguage) => {
+    setLanguage(nextLanguage)
+    const updatedProfile = { ...profile, language: nextLanguage }
+    saveProfile(updatedProfile)
+    setProfile(updatedProfile)
+    updateChildProfileLanguage(profile.id, nextLanguage).catch(error => {
+      console.warn('Could not sync profile language:', error)
+    })
+  }
+  const changeLevel = (nextLevel: Level) => {
+    const updatedProfile = { ...profile, currentLevel: nextLevel }
+    saveProfile(updatedProfile)
+    setProfile(updatedProfile)
+    updateChildProfileLevel(profile.id, nextLevel).catch(error => {
+      console.warn('Could not sync profile level:', error)
+    })
+  }
 
   return (
-    <div className="app-container" style={{ height: '100dvh', overflow: 'hidden' }}>
+    <div
+      className="app-container"
+      style={{
+        height: '100dvh',
+        overflow: 'hidden',
+        background:
+          'radial-gradient(circle at 12% 10%, rgba(255, 232, 130, 0.52), transparent 28%), radial-gradient(circle at 88% 8%, rgba(130, 171, 255, 0.4), transparent 30%), linear-gradient(160deg, #F7FFF9 0%, #EEF8FF 45%, #F8F2FF 100%)',
+      }}
+    >
       <MagicBackground />
 
-      <div className="relative z-10 flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
-
-        {/* ── 헤더 ── */}
-        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
-          style={{ padding: '14px 18px 10px', flexShrink: 0 }}>
-          <div className="flex items-center justify-between">
-            <div style={{ flex: 1 }}>
-              <p style={{ color: '#7A7A9A', fontSize: '0.78rem', fontWeight: 600 }}>{GREETING()}</p>
-              <h1 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#2D2D3A', lineHeight: 1.2 }}>
-                {profile.name}의 마법학교 ✨
-              </h1>
+      <div className="relative z-10 flex flex-col app-with-bottom-nav" style={{ height: '100%', overflow: 'hidden' }}>
+        <motion.header
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: '18px 18px 10px', flexShrink: 0 }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3" style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 18,
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                  fontSize: '2rem',
+                  background: 'linear-gradient(135deg, #FFE7A8, #FFB56B)',
+                  boxShadow: '0 8px 24px rgba(255, 181, 107, 0.38), inset 0 1px 0 rgba(255,255,255,0.75)',
+                }}
+              >
+                📜
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ color: '#5E6178', fontSize: '0.78rem', fontWeight: 800 }}>
+                  {new Date().getHours() < 12 ? t('home.morning') : new Date().getHours() < 17 ? t('home.afternoon') : t('home.evening')}
+                </p>
+                <h1
+                  style={{
+                    fontSize: '1.45rem',
+                    fontWeight: 900,
+                    color: '#242433',
+                    lineHeight: 1.12,
+                    letterSpacing: 0,
+                  }}
+                >
+                  {t('home.title')}
+                </h1>
+                <p style={{ color: '#8B8DA4', fontSize: '0.78rem', fontWeight: 800, marginTop: 4 }}>
+                  {t('home.subtitle')}
+                </p>
+              </div>
             </div>
-            {/* 캐릭터 이미지 버튼 */}
-            <motion.button whileTap={{ scale: 0.9 }}
-              onClick={() => { setCurrentProfileId(''); navigate('/profiles') }}
+
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => {
+                unlockSound()
+                playSound('tap')
+                setCurrentProfileId('')
+                navigate('/profiles')
+              }}
+              aria-label="프로필 바꾸기"
               style={{
-                width: 58, height: 58, borderRadius: 20,
-                background: 'rgba(255,255,255,0.85)',
-                backdropFilter: 'blur(12px)',
+                width: 58,
+                height: 58,
+                borderRadius: 20,
                 border: '2px solid rgba(255,255,255,0.9)',
-                boxShadow: '0 4px 16px rgba(98,214,178,0.25)',
-                cursor: 'pointer', overflow: 'hidden',
-                padding: 0, flexShrink: 0,
-              }}>
+                background: 'rgba(255,255,255,0.78)',
+                boxShadow: '0 8px 22px rgba(76, 106, 170, 0.18)',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
               {charImg ? (
-                <img src={charImg} alt={profile.name}
+                <img
+                  src={charImg}
+                  alt={profile.name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={e => { (e.target as HTMLImageElement).style.display='none' }}
+                  onError={e => {
+                    ;(e.target as HTMLImageElement).style.display = 'none'
+                  }}
                 />
               ) : (
-                <span style={{ fontSize: '1.6rem' }}>🧙</span>
+                <span style={{ fontSize: '1.8rem' }}>✨</span>
               )}
             </motion.button>
           </div>
 
-          {/* 배지 */}
-          <div className="flex gap-2 mt-2 flex-wrap">
-            <div className="level-badge">🎯 {LEVEL_LABELS[profile.currentLevel]}</div>
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <select
+              value={profile.currentLevel}
+              onChange={event => changeLevel(event.target.value as Level)}
+              aria-label={t('profile.startLevel')}
+              className="level-badge"
+              style={{
+                height: 32,
+                border: 'none',
+                maxWidth: 260,
+                fontSize: '0.78rem',
+                fontWeight: 900,
+                padding: '0 10px',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {SELECTABLE_LEVELS.map(level => (
+                <option key={level} value={level}>{t(`profile.levels.${level}`)}</option>
+              ))}
+            </select>
             {streak && streak.currentStreak > 0 && (
-              <div className="streak-badge">🔥 {streak.currentStreak}일 연속</div>
+              <div className="streak-badge">🔥 {t('home.streakShort', { count: streak.currentStreak })}</div>
             )}
+            <select
+              value={language}
+              onChange={event => changeLanguage(event.target.value as SupportedLanguage)}
+              aria-label={t('common.selectLanguage')}
+              style={{
+                height: 32,
+                borderRadius: 999,
+                border: '1.5px solid rgba(255,255,255,0.9)',
+                background: 'rgba(255,255,255,0.74)',
+                color: '#5E6178',
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                padding: '0 10px',
+                outline: 'none',
+                boxShadow: '0 4px 12px rgba(76, 106, 170, 0.12)',
+              }}
+            >
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <option key={lang} value={lang}>{LANGUAGE_LABELS[lang]}</option>
+              ))}
+            </select>
           </div>
-        </motion.div>
+        </motion.header>
 
-        {/* 스크롤 영역 */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 14px 12px' }}>
-
-          {/* ── 오늘의 퀘스트 ── */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }} style={{ marginBottom: 10 }}>
-            <div className="glass-card" style={{
-              padding: '12px 16px',
-              background: todayDone
-                ? 'linear-gradient(135deg,rgba(98,214,178,0.25),rgba(168,240,220,0.2))'
-                : 'linear-gradient(135deg,rgba(255,229,143,0.3),rgba(255,199,217,0.2))',
-            }}>
+        <main className="home-main" style={{ flex: 1, overflowY: 'auto', padding: '0 8px 110px' }}>
+          {todayDone && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                marginBottom: 12,
+                padding: '10px 14px',
+                borderRadius: 20,
+                background: 'rgba(255,255,255,0.72)',
+                border: '1.5px solid rgba(255,255,255,0.9)',
+                boxShadow: '0 10px 28px rgba(82, 120, 180, 0.12)',
+              }}
+            >
               <div className="flex items-center gap-3">
-                <motion.div animate={{ y:[0,-5,0] }} transition={{ duration:2.5, repeat:Infinity }}
-                  style={{ fontSize: '2.2rem' }}>
-                  {todayDone ? '🎉' : '📜'}
-                </motion.div>
-                <div className="flex-1">
-                  <p style={{ fontWeight: 900, fontSize: '0.95rem', color: '#2D2D3A' }}>
-                    {todayDone ? '오늘의 퀘스트 완료!' : '오늘의 퀘스트'}
-                  </p>
-                  <p style={{ color: '#7A7A9A', fontSize: '0.78rem', marginTop: 1 }}>
-                    {todayDone ? `${todayStats.correct}/${todayStats.total}문제 정복! 👏` : '마법 문제 20개를 풀어요!'}
-                  </p>
+                <span style={{ fontSize: '1.8rem' }}>🏆</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 900, color: '#242433' }}>{t('home.todayDone')}</div>
+                  <div style={{ color: '#7A7D96', fontSize: '0.78rem', fontWeight: 800 }}>
+                    {t('home.successCount', { correct: todayStats.correct, total: todayStats.total })}
+                  </div>
                 </div>
-                {todayDone && (
-                  <div style={{ background:'linear-gradient(135deg,#62D6B2,#3EC99A)', borderRadius:10, padding:'3px 8px', color:'#fff', fontWeight:800, fontSize:'0.75rem', boxShadow:'0 2px 6px rgba(98,214,178,0.4)' }}>완료 ✓</div>
-                )}
               </div>
-            </div>
-          </motion.div>
+            </motion.section>
+          )}
 
-          {/* ── 메뉴 그리드 ── */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
-            {menuItems.map((item, i) => (
-              <motion.button key={item.route}
-                initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
-                transition={{ delay: 0.12 + i*0.06 }}
-                whileTap={{ scale:0.94, y:5 }}
-                onClick={() => navigate(item.route)}
+          <section
+            className="home-menu-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: 10,
+              marginTop: todayDone ? 0 : 4,
+            }}
+          >
+            {menuItems.map((item, i) => {
+              const copy = getMenuCopy(item.route)
+              return (
+              <motion.button
+                className="home-menu-card"
+                key={item.route}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 + i * 0.05 }}
+                whileTap={{ scale: 0.95, y: 5 }}
+                onClick={() => {
+                  unlockSound()
+                  playSound(item.route.includes('practice') ? 'magic' : 'tap')
+                  navigate(item.route)
+                }}
                 style={{
-                  background: item.gradient, borderRadius:22,
-                  padding:'14px 14px', border:'none', cursor:'pointer',
-                  textAlign:'left', minHeight:96,
-                  boxShadow: item.shadow,
-                  position:'relative', overflow:'hidden',
-                }}>
-                <div style={{ position:'absolute',top:0,left:0,right:0,height:'50%',background:'linear-gradient(180deg,rgba(255,255,255,0.28),transparent)',borderRadius:'22px 22px 0 0' }} />
-                <div style={{ position:'absolute',right:8,bottom:6,fontSize:'2rem',fontWeight:900,opacity:0.13,color:'#fff',lineHeight:1 }}>{item.deco}</div>
-                <motion.div animate={{ y:[0,-3,0] }} transition={{ duration:2+i*0.3, repeat:Infinity }}
-                  style={{ fontSize:'1.8rem', marginBottom:5, position:'relative', zIndex:1 }}>
-                  {item.emoji}
-                </motion.div>
-                <div style={{ fontWeight:900, fontSize:'0.88rem', color:item.textColor??'#fff', textShadow:item.textColor?'none':'0 1px 3px rgba(0,0,0,0.12)', position:'relative', zIndex:1 }}>
-                  {item.title}
-                </div>
-                <div style={{ fontSize:'0.72rem', marginTop:2, color:item.textColor?'rgba(90,66,0,0.7)':'rgba(255,255,255,0.85)', position:'relative', zIndex:1 }}>
-                  {item.sub}
+                  minHeight: 0,
+                  aspectRatio: '1.78 / 1',
+                  border: 'none',
+                  borderRadius: 20,
+                  padding: 0,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: item.gradient,
+                  color: item.textColor ?? '#FFFFFF',
+                  boxShadow: `0 8px 0 ${item.shadow}, 0 18px 34px ${item.glow}`,
+                }}
+              >
+                <img
+                  src={item.image}
+                  alt={copy.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                    objectFit: 'cover',
+                    objectPosition: 'center top',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.34), inset 0 -16px 22px rgba(0,0,0,0.04)',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div
+                  className="home-card-text"
+                  style={getMenuTextStyle(item.route, item.textColor)}
+                >
+                  <div style={{ fontWeight: 900, fontSize: 'clamp(0.62rem, 1.9vw, 0.84rem)', lineHeight: 0.88, whiteSpace: 'normal', overflowWrap: 'break-word' }}>
+                    {copy.title}
+                  </div>
+                  <div style={{ marginTop: 1, fontWeight: 800, fontSize: 'clamp(0.45rem, 1.35vw, 0.58rem)', lineHeight: 0.94, opacity: 0.9, whiteSpace: 'normal', overflowWrap: 'break-word' }}>
+                    {copy.sub}
+                  </div>
                 </div>
               </motion.button>
-            ))}
-          </div>
+              )
+            })}
+          </section>
 
-          {/* ── 보상 현황 ── */}
-          <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-            transition={{ delay:0.35 }} style={{ marginBottom:10 }}>
-            <div className="glass-card" style={{ padding:'12px 16px' }}>
-              <h3 style={{ fontWeight:900, color:'#2D2D3A', marginBottom:10, fontSize:'0.9rem' }}>🎁 내 보물 창고</h3>
-              <div className="flex justify-around">
-                {[
-                  { emoji:'⭐', label:'별',    count:starCount,    color:'#FFE58F' },
-                  { emoji:'🌟', label:'스티커', count:stickerCount, color:'#C9B6FF' },
-                  { emoji:'🏅', label:'배지',   count:badgeCount,   color:'#A8D8FF' },
-                ].map(item => (
-                  <div key={item.label} className="flex flex-col items-center gap-1">
-                    <div style={{ width:44,height:44,borderRadius:14,background:item.color+'55',border:`2px solid ${item.color}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem',boxShadow:`0 3px 10px ${item.color}55` }}>{item.emoji}</div>
-                    <span style={{ fontSize:'0.68rem',color:'#7A7A9A',fontWeight:700 }}>{item.label}</span>
-                    <span style={{ fontWeight:900,fontSize:'1.1rem',color:'#2D2D3A' }}>{item.count}</span>
-                  </div>
-                ))}
-              </div>
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+            style={{
+              marginTop: 24,
+              padding: '16px 14px 18px',
+              borderRadius: 28,
+              background:
+                'linear-gradient(135deg, rgba(255, 247, 205, 0.82), rgba(255, 238, 154, 0.38))',
+              border: '1.5px solid rgba(255, 229, 116, 0.72)',
+              boxShadow:
+                '0 12px 28px rgba(255, 196, 62, 0.16), inset 0 1px 0 rgba(255,255,255,0.88)',
+            }}
+          >
+            <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 900, color: '#4E3900', margin: 0 }}>
+                🎁 {t('home.treasureTitle')}
+              </h2>
+              <span style={{ color: '#A47800', fontSize: '0.72rem', fontWeight: 900 }}>
+                {t('home.collectRewards')}
+              </span>
             </div>
-          </motion.div>
-
-          {/* ── 연속 학습 ── */}
-          {streak && (
-            <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.42 }}>
-              <div className="glass-card" style={{ padding:'12px 16px' }}>
-                <div className="flex items-center justify-between" style={{ marginBottom:10 }}>
-                  <h3 style={{ fontWeight:900, color:'#2D2D3A', fontSize:'0.9rem' }}>🔥 연속 학습</h3>
-                  <span style={{ fontSize:'0.75rem',color:'#7A7A9A',fontWeight:700 }}>{streak.currentStreak}일째!</span>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 12,
+              }}
+            >
+              {[
+                { icon: '🪙', label: t('home.coins'), count: coinCount, color: '#FFE36E', glow: 'rgba(255, 211, 72, 0.55)' },
+                { icon: '⭐', label: t('home.stars'), count: starCount, color: '#C7ADFF', glow: 'rgba(163, 130, 255, 0.42)' },
+                { icon: '🏅', label: t('home.badges'), count: badgeCount, color: '#8FDBFF', glow: 'rgba(100, 190, 255, 0.42)' },
+              ].map(item => (
+                <div key={item.label} style={{ textAlign: 'center' }}>
+                  <div
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 24,
+                      margin: '0 auto 8px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: '2.1rem',
+                      background: `linear-gradient(135deg, rgba(255,255,255,0.85), ${item.color})`,
+                      boxShadow: `0 10px 26px ${item.glow}, inset 0 1px 0 rgba(255,255,255,0.85)`,
+                      border: '1.5px solid rgba(255,255,255,0.82)',
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div style={{ color: '#666A84', fontSize: '0.74rem', fontWeight: 900 }}>
+                    {item.label}
+                  </div>
+                  <div style={{ color: '#242433', fontSize: '1.25rem', fontWeight: 900 }}>
+                    {item.count}
+                  </div>
                 </div>
-                <StreakDots streak={streak.currentStreak} />
+              ))}
+            </div>
+          </motion.section>
+
+          {streak && (
+            <motion.section
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.36 }}
+              style={{
+                marginTop: 18,
+                padding: '16px 14px 18px',
+                borderRadius: 28,
+                background:
+                  'linear-gradient(135deg, rgba(255,255,255,0.82), rgba(232, 244, 255, 0.78))',
+                border: '1.5px solid rgba(157, 211, 255, 0.68)',
+                boxShadow:
+                  '0 12px 28px rgba(100, 170, 235, 0.14), inset 0 1px 0 rgba(255,255,255,0.9)',
+              }}
+            >
+              <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: 900, color: '#23486B', margin: 0 }}>
+                  🔥 {t('home.streak')}
+                </h2>
+                <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#5B86A8' }}>
+                  {t('home.streakDays', { count: streak.currentStreak })}
+                </span>
               </div>
-            </motion.div>
+              <StreakDots streak={streak.currentStreak} />
+            </motion.section>
           )}
-        </div>
+        </main>
       </div>
+      <BottomNav />
     </div>
   )
 }
 
 function StreakDots({ streak }: { streak: number }) {
-  const days = ['일','월','화','수','목','금','토']
+  const { t } = useI18n()
+  const days = [
+    t('home.weekSun'),
+    t('home.weekMon'),
+    t('home.weekTue'),
+    t('home.weekWed'),
+    t('home.weekThu'),
+    t('home.weekFri'),
+    t('home.weekSat'),
+  ]
   const today = new Date().getDay()
   const filled = Math.min(streak, 7)
+
   return (
-    <div className="flex gap-1 justify-between">
-      {days.map((d, i) => {
+    <div className="flex gap-2 justify-between">
+      {days.map((day, i) => {
         const daysAgo = (today - i + 7) % 7
         const isActive = daysAgo < filled
         const isToday = i === today
+
         return (
-          <div key={d} className="flex flex-col items-center gap-1">
-            <motion.div animate={isActive ? { scale:[1,1.08,1] } : {}} transition={{ duration:2, delay:i*0.1, repeat:Infinity }}
+          <div key={day} className="flex flex-col items-center gap-1" style={{ minWidth: 34 }}>
+            <motion.div
+              animate={isActive ? { scale: [1, 1.08, 1] } : {}}
+              transition={{ duration: 2, delay: i * 0.08, repeat: Infinity }}
               style={{
-                width:34,height:34,borderRadius:11,
-                background: isActive ? 'linear-gradient(135deg,#62D6B2,#3EC99A)' : 'rgba(255,255,255,0.6)',
-                display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize: isActive ? '0.9rem' : '0.7rem',
-                fontWeight:800,
-                color: isActive ? '#fff' : '#7A7A9A',
-                boxShadow: isActive ? '0 3px 0 #28A87A,0 5px 10px rgba(98,214,178,0.3)' : '0 2px 0 #C8E8DE',
-                outline: isToday ? '2.5px solid #62D6B2' : 'none',
+                width: 34,
+                height: 34,
+                borderRadius: 12,
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: isActive ? '0.95rem' : '0.72rem',
+                fontWeight: 900,
+                color: isActive ? '#FFFFFF' : '#8589A1',
+                background: isActive
+                  ? 'linear-gradient(135deg, #FFB44E, #FF7D69)'
+                  : 'rgba(255,255,255,0.62)',
+                boxShadow: isActive
+                  ? '0 5px 0 #D95E47, 0 8px 18px rgba(255,125,105,0.28)'
+                  : '0 3px 0 rgba(185, 205, 218, 0.8)',
+                outline: isToday ? '2.5px solid rgba(255,180,78,0.8)' : 'none',
                 outlineOffset: 2,
-              }}>
-              {isActive ? '🔥' : d}
+              }}
+            >
+              {isActive ? '🔥' : day}
             </motion.div>
-            <span style={{ fontSize:'0.65rem',color:'#7A7A9A',fontWeight:700 }}>{d}</span>
+            <span style={{ fontSize: '0.65rem', color: '#8589A1', fontWeight: 900 }}>{day}</span>
           </div>
         )
       })}

@@ -4,3 +4,17 @@ dist
 .env.local
 .DS_Store
 *.log
+
+.vercel
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+
+# Documents
+*.docx
+*.xlsx
+*.pdf

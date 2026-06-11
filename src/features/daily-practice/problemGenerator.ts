@@ -1,4 +1,4 @@
-import { Level, MathQuestion, Operation } from './types'
+import type { Level, MathQuestion, Operation } from '../../lib/types'
 
 // ─── 레벨별 숫자 범위 정의 ───────────────────────────────
 interface LevelConfig {

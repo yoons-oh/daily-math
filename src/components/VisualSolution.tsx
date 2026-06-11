@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { MathQuestion } from '../lib/types'
-import { say, sayWordsCached, preloadWords, stopAll } from '../lib/tts'
+import { say, sayWordsCached, preloadWords, stopAll, unlockTts } from '../lib/tts'
+import { useI18n } from '../i18n'
 
 const EMOJI_THEMES = [
   { name: '곰인형',     emoji: '🧸' },
@@ -25,13 +26,21 @@ const KO_READ  = ['일','이','삼','사','오','육','칠','팔','구','십','�
 const koNum  = (n: number) => KO_COUNT[n-1] ?? String(n)
 const koQuan = (n: number) => KO_QUAN[n-1]  ?? String(n)
 const koRead = (n: number) => KO_READ[n-1]  ?? String(n)
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
 
 interface Props { question: MathQuestion; themeIndex: number }
 
 export default function VisualSolution({ question, themeIndex }: Props) {
+  return <KoreanVisualSolution question={question} themeIndex={themeIndex} />
+}
+
+function KoreanVisualSolution({ question, themeIndex }: Props) {
+  const { language, t } = useI18n()
   const { num1, num2, operation, answer } = question
   const theme = EMOJI_THEMES[themeIndex % EMOJI_THEMES.length]
   const isAdd = operation === 'add'
+  const usePlaceValueAdd = isAdd && Math.max(String(num1).length, String(num2).length, String(answer).length) >= 2
+  const useSubtractionVisual = !isAdd
   const cap = (n: number) => Math.min(n, 10)
   const c1 = cap(num1), c2 = cap(num2), cAns = cap(answer)
 
@@ -63,31 +72,37 @@ export default function VisualSolution({ question, themeIndex }: Props) {
     runningRef.current = true
     const m = mutedRef.current
 
-    const n1r = koRead(num1), n2r = koRead(num2)
-    const n1q = koQuan(num1), n2q = koQuan(num2), anq = koQuan(answer)
-    const opW = isAdd ? '더하기' : '빼기'
+    const countWord = (n: number) => language === 'ko' ? koNum(n) : String(n)
+    const readWord = (n: number) => language === 'ko' ? koRead(n) : String(n)
+    const quantityWord = (n: number) => language === 'ko' ? koQuan(n) : String(n)
+    const n1r = readWord(num1), n2r = readWord(num2)
+    const n1q = quantityWord(num1), n2q = quantityWord(num2), anq = quantityWord(answer)
 
-    const words1   = Array.from({ length: num1 },  (_, i) => koNum(i + 1))
-    const words2   = Array.from({ length: num2 },  (_, i) => koNum(i + 1))
-    const wordsAll = Array.from({ length: answer }, (_, i) => koNum(i + 1))
+    const words1   = Array.from({ length: num1 },  (_, i) => countWord(i + 1))
+    const words2   = Array.from({ length: num2 },  (_, i) => countWord(i + 1))
+    const wordsAll = Array.from({ length: answer }, (_, i) => countWord(i + 1))
 
-    // 모든 오디오 미리 fetch — 캐시 없어도 처음부터 정상 동작
     const [urls1, urls2, urlsAll] = await Promise.all([
-      preloadWords(words1),
-      preloadWords(words2),
-      preloadWords(wordsAll),
+      preloadWords(words1, language),
+      preloadWords(words2, language),
+      preloadWords(wordsAll, language),
     ])
 
     const alive = () => runningRef.current
     if (!alive()) return
 
-    // ① 인트로
-    await say(`${n1r} ${opW} ${n2r}, 같이 알아봐요!`, m)
+    await say(
+      isAdd
+        ? t('solution.addIntro', { num1: n1r, num2: n2r })
+        : t('solution.subIntro', { num1: n1r, num2: n2r }),
+      m,
+      language,
+    )
     if (!alive()) return
 
     // ② 그룹1 소개
     setPhase('show1')
-    await say(`${theme.name} ${n1q}개가 여기 있어요! 같이 세어볼까요?`, m)
+    await say(t('solution.groupStart', { count: n1q }), m, language)
     if (!alive()) return
 
     // ③ 그룹1 카운팅
@@ -96,6 +111,7 @@ export default function VisualSolution({ question, themeIndex }: Props) {
       sayWordsCached(urls1, words1, m,
         i => { if (alive()) setHl1(i) },
         () => { setHl1(-1); resolve() }
+        , language
       )
     })
     if (!alive()) return
@@ -104,9 +120,9 @@ export default function VisualSolution({ question, themeIndex }: Props) {
     // ④ 그룹2 소개
     setShow2(true); setPhase('show2')
     const txt2 = isAdd
-      ? `친구가 ${theme.name} ${n2q}개를 줬어요!`
-      : `앗! ${theme.name} ${n2q}개가 사라졌어요!`
-    await say(txt2, m)
+      ? t('solution.groupAdd', { count: n2q })
+      : t('solution.groupSub', { count: n2q })
+    await say(txt2, m, language)
     if (!alive()) return
 
     // ⑤ 그룹2 카운팅
@@ -119,6 +135,7 @@ export default function VisualSolution({ question, themeIndex }: Props) {
           setShown2(prev => prev.includes(i) ? prev : [...prev, i])
         },
         () => { setHl2(-1); resolve() }
+        , language
       )
     })
     if (!alive()) return
@@ -127,9 +144,9 @@ export default function VisualSolution({ question, themeIndex }: Props) {
     // ⑥ 모두 세어봐요
     setShowAll(true); setPhase('countAll')
     const txtAll = isAdd
-      ? `그럼 ${theme.name}이 모두 몇 개인지 같이 세어봐요!`
-      : `자, 남은 ${theme.name}이 몇 개인지 같이 세어봐요!`
-    await say(txtAll, m)
+      ? t('solution.countAllAdd')
+      : t('solution.countAllSub')
+    await say(txtAll, m, language)
     if (!alive()) return
 
     // ⑦ 전체 카운팅
@@ -141,6 +158,7 @@ export default function VisualSolution({ question, themeIndex }: Props) {
           setShownAll(prev => prev.includes(i) ? prev : [...prev, i])
         },
         () => { setHlAll(-1); resolve() }
+        , language
       )
     })
     if (!alive()) return
@@ -149,9 +167,9 @@ export default function VisualSolution({ question, themeIndex }: Props) {
     // ⑧ 결과
     setPhase('result')
     const txtResult = isAdd
-      ? `와! ${theme.name}이 모두 ${anq}개가 됐어요! ${n1r} 더하기 ${n2r}는 ${koRead(answer)}이에요! 정말 잘했어요!`
-      : `${theme.name}이 ${anq}개 남았어요! ${n1r} 빼기 ${n2r}는 ${koRead(answer)}이에요! 최고예요!`
-    await say(txtResult, m)
+      ? t('solution.addResult', { count: anq, num1: n1r, num2: n2r, answer: readWord(answer) })
+      : t('solution.subResult', { count: anq, num1: n1r, num2: n2r, answer: readWord(answer) })
+    await say(txtResult, m, language)
   }
 
   function pause(ms: number): Promise<void> {
@@ -159,9 +177,18 @@ export default function VisualSolution({ question, themeIndex }: Props) {
   }
 
   useEffect(() => {
+    if (usePlaceValueAdd || useSubtractionVisual) return
     run()
     return () => { runningRef.current = false; stopAll() }
   }, [question.id])
+
+  if (usePlaceValueAdd) {
+    return <PlaceValueAdditionSolution question={question} theme={theme} />
+  }
+
+  if (useSubtractionVisual) {
+    return <SubtractionSolution question={question} theme={theme} />
+  }
 
   // ─── 이모지 셀 ──────────────────────────────────────────
   function EmojiCell({ idx, hlIdx, hlColor, visible, flyIn }: {
@@ -202,13 +229,13 @@ export default function VisualSolution({ question, themeIndex }: Props) {
 
       {/* 버튼 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setMuted(v => !v)}
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); setMuted(v => !v) }}
           style={{ background: muted ? 'rgba(255,118,118,0.15)' : 'rgba(98,214,178,0.15)', border: `2px solid ${muted ? 'rgba(255,118,118,0.4)' : 'rgba(98,214,178,0.4)'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: muted ? '#FF5555' : '#2A9A70' }}>
-          {muted ? '🔇 음성 꺼짐' : '🔊 음성 켜짐'}
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={run}
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); run() }}
           style={{ background: 'rgba(201,182,255,0.15)', border: '2px solid rgba(201,182,255,0.45)', borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: '#7B5FCC' }}>
-          🔄 다시 보기
+          {t('solution.replay')}
         </motion.button>
       </div>
 
@@ -298,4 +325,929 @@ export default function VisualSolution({ question, themeIndex }: Props) {
       </div>
     </div>
   )
+}
+
+function LocalizedVisualSolution({ question }: { question: MathQuestion }) {
+  const { language, t } = useI18n()
+  const [muted, setMuted] = useState(false)
+  const [stage, setStage] = useState(0)
+  const runningRef = useRef(false)
+  const isAdd = question.operation === 'add'
+  const sign = isAdd ? '+' : '-'
+  const step1 = t('solution.stepFirst', { num: question.num1 })
+  const step2 = isAdd
+    ? t('solution.stepAdd', { num: question.num2 })
+    : t('solution.stepSub', { num: question.num2 })
+  const explanation = isAdd
+    ? t('solution.addExplain', { num1: question.num1, num2: question.num2, answer: question.answer })
+    : t('solution.subExplain', { num1: question.num1, num2: question.num2, answer: question.answer })
+
+  async function runLocalizedSolution() {
+    runningRef.current = false
+    stopAll()
+    await delay(80)
+    runningRef.current = true
+    const alive = () => runningRef.current
+
+    await unlockTts()
+    if (!alive()) return
+    setStage(1)
+    await say(step1, muted, language)
+    if (!alive()) return
+    await delay(180)
+
+    setStage(2)
+    await say(step2, muted, language)
+    if (!alive()) return
+    await delay(180)
+
+    setStage(3)
+    await say(explanation, muted, language)
+  }
+
+  useEffect(() => {
+    runLocalizedSolution()
+    return () => {
+      runningRef.current = false
+      stopAll()
+    }
+  }, [question.id, language])
+
+  return (
+    <div
+      className="glass-card"
+      style={{
+        height: '100%',
+        minHeight: 260,
+        padding: 18,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 14,
+        background: 'rgba(255,255,255,0.82)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <motion.button
+          whileTap={{ scale: 0.95, y: 2 }}
+          type="button"
+          onClick={() => setMuted(value => !value)}
+          style={solutionButtonStyle}
+        >
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95, y: 2 }}
+          type="button"
+          onClick={runLocalizedSolution}
+          style={solutionButtonStyle}
+        >
+          {t('solution.replay')}
+        </motion.button>
+      </div>
+
+      <div style={{ textAlign: 'center', display: 'grid', gap: 10 }}>
+        <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#7A7A9A', marginBottom: 10 }}>
+          {t('solution.title')}
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 12, scale: 0.96 }}
+          animate={{ opacity: stage >= 1 ? 1 : 0.25, y: stage >= 1 ? 0 : 12, scale: stage >= 1 ? 1 : 0.96 }}
+          style={{
+            display: 'inline-grid',
+            gridTemplateColumns: '1fr auto 1fr auto 1fr',
+            alignItems: 'center',
+            gap: 12,
+            padding: '18px 20px',
+            borderRadius: 22,
+            background: 'linear-gradient(135deg,rgba(98,214,178,0.16),rgba(168,216,255,0.18))',
+            border: '1.5px solid rgba(255,255,255,0.9)',
+            boxShadow: '0 10px 24px rgba(76,106,170,0.12)',
+          }}
+        >
+          {[question.num1, sign, stage >= 2 ? question.num2 : '?', '=', stage >= 3 ? question.answer : '?'].map((item, index) => (
+            <motion.span
+              key={`${item}-${index}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.08 }}
+              style={{
+                fontSize: typeof item === 'number' ? '2rem' : '1.35rem',
+                fontWeight: 900,
+                color: index === 4 ? '#31A77E' : '#2D2D3A',
+              }}
+            >
+              {item}
+            </motion.span>
+          ))}
+        </motion.div>
+
+        <div style={{ display: 'grid', gap: 8 }}>
+          <LocalizedStepCard active={stage >= 1} done={stage > 1} label={step1} />
+          <LocalizedStepCard active={stage >= 2} done={stage > 2} label={step2} />
+          <LocalizedStepCard active={stage >= 3} done={stage >= 3} label={explanation} strong />
+        </div>
+      </div>
+
+      {stage < 3 && (
+        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+          {[0, 1, 2].map(i => (
+            <motion.span
+              key={i}
+              animate={{ scale: [1, 1.45, 1], opacity: [0.35, 1, 0.35] }}
+              transition={{ duration: 0.7, delay: i * 0.16, repeat: Infinity }}
+              style={{ width: 7, height: 7, borderRadius: '50%', background: '#62D6B2' }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LocalizedStepCard({ active, done, label, strong }: { active: boolean; done: boolean; label: string; strong?: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{
+        opacity: active ? 1 : 0.3,
+        x: active ? 0 : -12,
+        scale: active ? 1 : 0.98,
+      }}
+      transition={{ type: 'spring', damping: 18, stiffness: 260 }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 12px',
+        borderRadius: 16,
+        background: strong ? 'rgba(98,214,178,0.18)' : 'rgba(255,255,255,0.72)',
+        border: `1.5px solid ${strong ? 'rgba(98,214,178,0.42)' : 'rgba(255,255,255,0.9)'}`,
+        color: strong ? '#227B5F' : '#5E6178',
+        fontWeight: 900,
+        lineHeight: 1.35,
+        textAlign: 'left',
+      }}
+    >
+      <motion.span
+        animate={active && !done ? { scale: [1, 1.12, 1] } : {}}
+        transition={{ duration: 0.8, repeat: active && !done ? Infinity : 0 }}
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 10,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          background: done ? '#62D6B2' : 'rgba(98,214,178,0.16)',
+          color: done ? '#FFFFFF' : '#31A77E',
+          fontWeight: 900,
+        }}
+      >
+        {done ? '✓' : '•'}
+      </motion.span>
+      <span>{label}</span>
+    </motion.div>
+  )
+}
+
+const solutionButtonStyle: React.CSSProperties = {
+  border: 'none',
+  borderRadius: 14,
+  background: 'rgba(255,255,255,0.82)',
+  color: '#5E6178',
+  fontWeight: 900,
+  fontSize: '0.8rem',
+  padding: '9px 12px',
+  boxShadow: '0 4px 12px rgba(76,106,170,0.12)',
+}
+
+function PlaceValueAdditionSolution({
+  question,
+  theme,
+}: {
+  question: MathQuestion
+  theme: { name: string; emoji: string }
+}) {
+  const { language, t } = useI18n()
+  const { num1, num2, answer } = question
+  const [stage, setStage] = useState(0)
+  const [muted, setMuted] = useState(false)
+  const runningRef = useRef(false)
+  const mutedRef = useRef(false)
+  mutedRef.current = muted
+
+  const n1 = splitPlace(num1)
+  const n2 = splitPlace(num2)
+  const ans = splitPlace(answer)
+  const onesSum = n1.ones + n2.ones
+  const carry = Math.floor(onesSum / 10)
+  const finalOnes = onesSum % 10
+  const tensTotal = n1.tens + n2.tens + carry
+  const hasCarry = carry > 0
+
+  async function runPlaceValue() {
+    runningRef.current = false
+    stopAll()
+    await delay(80)
+    runningRef.current = true
+    const m = mutedRef.current
+    const alive = () => runningRef.current
+
+    setStage(1)
+    await say(t('solution.placeSplit', { num: num1, tens: n1.tens, ones: n1.ones }), m, language)
+    if (!alive()) return
+
+    setStage(2)
+    await say(t('solution.placeSplit', { num: num2, tens: n2.tens, ones: n2.ones }), m, language)
+    if (!alive()) return
+
+    setStage(3)
+    await say(t('solution.onesAdd', { ones1: n1.ones, ones2: n2.ones, sum: onesSum }), m, language)
+    if (!alive()) return
+
+    if (hasCarry) {
+      setStage(4)
+      await say(t('solution.carryMakeBundle', { sum: onesSum, carry }), m, language)
+      if (!alive()) return
+      await say(t('solution.carryMoveBundle', { carry, ones: finalOnes }), m, language)
+      if (!alive()) return
+    }
+
+    setStage(5)
+    await say(t('solution.tensAdd', { tens1: n1.tens, tens2: n2.tens, carry: hasCarry ? carry : 0, total: tensTotal }), m, language)
+    if (!alive()) return
+
+    setStage(6)
+    await say(t('solution.placeAddResult', { tens: ans.tens, ones: ans.ones, num1, num2, answer }), m, language)
+  }
+
+  useEffect(() => {
+    runPlaceValue()
+    return () => { runningRef.current = false; stopAll() }
+  }, [question.id])
+
+  const box = (bg: string, border: string): React.CSSProperties => ({
+    background: bg,
+    border: `2px solid ${border}`,
+    borderRadius: 14,
+    padding: '8px 10px',
+    flexShrink: 0,
+  })
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); setMuted(v => !v) }}
+          style={{ background: muted ? 'rgba(255,118,118,0.15)' : 'rgba(98,214,178,0.15)', border: `2px solid ${muted ? 'rgba(255,118,118,0.4)' : 'rgba(98,214,178,0.4)'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: muted ? '#FF5555' : '#2A9A70' }}>
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); runPlaceValue() }}
+          style={{ background: 'rgba(201,182,255,0.15)', border: '2px solid rgba(201,182,255,0.45)', borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: '#7B5FCC' }}>
+          {t('solution.replay')}
+        </motion.button>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, paddingRight: 2, paddingBottom: 8 }}>
+        <PlaceValueBox
+          title={t('solution.splitTitle', { num: num1 })}
+          theme={theme}
+          value={n1}
+          active={stage >= 1}
+          style={box('rgba(98,214,178,0.1)', 'rgba(98,214,178,0.4)')}
+        />
+
+        <motion.div initial={{ scale: 0 }} animate={{ scale: stage >= 2 ? 1 : 0 }}
+          style={{ flexShrink: 0, textAlign: 'center', fontSize: '1.3rem', fontWeight: 900, color: '#62D6B2' }}>
+          +
+        </motion.div>
+
+        <PlaceValueBox
+          title={t('solution.splitTitle', { num: num2 })}
+          theme={theme}
+          value={n2}
+          active={stage >= 2}
+          style={box('rgba(201,182,255,0.12)', 'rgba(201,182,255,0.45)')}
+        />
+
+        {stage >= 3 && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={box('rgba(255,229,143,0.22)', 'rgba(255,207,87,0.45)')}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#8A6A00', marginBottom: 5 }}>
+              {t('solution.onesCalculation')}
+            </div>
+            <div style={{ fontWeight: 900, color: '#2D2D3A' }}>
+              {n1.ones} + {n2.ones} = {onesSum}
+              {hasCarry ? t('solution.onesWithCarry', { carry, ones: finalOnes }) : t('solution.onesOnly', { ones: finalOnes })}
+            </div>
+          </motion.div>
+        )}
+
+        {hasCarry && stage >= 4 && (
+          <CarryOnesCard
+            theme={theme}
+            onesSum={onesSum}
+            carry={carry}
+            finalOnes={finalOnes}
+            style={box('rgba(255,255,255,0.88)', 'rgba(98,214,178,0.45)')}
+          />
+        )}
+
+        {stage >= 5 && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={box('rgba(168,216,255,0.18)', 'rgba(105,170,235,0.4)')}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#336AA0', marginBottom: 5 }}>
+              {t('solution.tensCalculation')}
+            </div>
+            <div style={{ fontWeight: 900, color: '#2D2D3A' }}>
+              {n1.tens} + {n2.tens}{hasCarry ? ` + ${carry}` : ''} = {t('solution.bundleCount', { count: tensTotal })}
+            </div>
+          </motion.div>
+        )}
+
+        {stage >= 6 && (
+          <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 10 }}
+            style={{ ...box('rgba(98,214,178,0.16)', 'rgba(98,214,178,0.42)'), textAlign: 'center' }}>
+            <div style={{ fontWeight: 900, color: '#2A9A70', marginBottom: 6 }}>
+              {t('solution.placeValueSummary', { tens: ans.tens, ones: ans.ones })}
+            </div>
+            <div style={{ fontWeight: 900, fontSize: '1.3rem', color: '#2D2D3A' }}>
+              {num1} + {num2} = <span style={{ fontSize: '1.7rem', color: '#3EC99A' }}>{answer}</span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CarryOnesCard({
+  theme,
+  onesSum,
+  carry,
+  finalOnes,
+  style,
+}: {
+  theme: { name: string; emoji: string }
+  onesSum: number
+  carry: number
+  finalOnes: number
+  style: React.CSSProperties
+}) {
+  const { t } = useI18n()
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={style}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#2A9A70', marginBottom: 8 }}>
+        {t('solution.carryCardTitle')}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+          {Array.from({ length: onesSum }, (_, i) => (
+            <motion.span
+              key={i}
+              initial={{ scale: 0.88, opacity: 0.7 }}
+              animate={{
+                scale: i < 10 ? [1, 1.16, 1] : 1,
+                opacity: i < 10 ? 1 : 0.78,
+              }}
+              transition={{ duration: 0.7, delay: i < 10 ? i * 0.035 : 0 }}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 7,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: i < 10 ? 'rgba(98,214,178,0.2)' : 'rgba(201,182,255,0.22)',
+                border: i < 10 ? '1.5px solid rgba(98,214,178,0.58)' : '1.5px solid rgba(201,182,255,0.5)',
+                fontSize: '0.82rem',
+              }}
+            >
+              {theme.emoji}
+            </motion.span>
+          ))}
+        </div>
+
+        <motion.div
+          animate={{ x: [0, 3, 0] }}
+          transition={{ duration: 0.8, repeat: Infinity }}
+          style={{ color: '#2A9A70', fontWeight: 900, fontSize: '1.15rem' }}
+        >
+          →
+        </motion.div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {Array.from({ length: carry }, (_, i) => (
+            <motion.div
+              key={`carry-${i}`}
+              initial={{ y: 18, scale: 0.72, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 220, delay: i * 0.1 }}
+            >
+              <TenBundle theme={theme} />
+            </motion.div>
+          ))}
+          {Array.from({ length: finalOnes }, (_, i) => (
+            <OneItem key={`remain-${i}`} theme={theme} />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 8, fontSize: '0.75rem', color: '#5F6F7A', fontWeight: 900 }}>
+        {t('solution.carryCardDesc', { ones: finalOnes })}
+      </div>
+    </motion.div>
+  )
+}
+
+function PlaceValueBox({
+  title,
+  theme,
+  value,
+  active,
+  style,
+}: {
+  title: string
+  theme: { name: string; emoji: string }
+  value: { tens: number; ones: number }
+  active: boolean
+  style: React.CSSProperties
+}) {
+  const { t } = useI18n()
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: active ? 1 : 0.35, y: active ? 0 : 8 }}
+      style={style}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#2D2D3A', marginBottom: 6 }}>
+        {title}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {value.tens > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            {Array.from({ length: value.tens }, (_, i) => (
+              <TenBundle key={i} theme={theme} />
+            ))}
+          </div>
+        )}
+        {value.ones > 0 && (
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+            {Array.from({ length: value.ones }, (_, i) => (
+              <OneItem key={i} theme={theme} />
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ fontSize: '0.75rem', color: '#7A7A9A', fontWeight: 800, marginTop: 5 }}>
+        {t('solution.placeValueSummary', { tens: value.tens, ones: value.ones })}
+      </div>
+    </motion.div>
+  )
+}
+
+function TenBundle({ theme }: { theme: { name: string; emoji: string } }) {
+  const { t } = useI18n()
+  return (
+    <div style={{
+      width: 66,
+      height: 50,
+      borderRadius: 12,
+      border: '2px solid rgba(98,214,178,0.55)',
+      background: 'rgba(98,214,178,0.14)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      justifyContent: 'center',
+      gap: 2,
+      padding: '4px 5px',
+      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.65)',
+    }}>
+      <div style={{
+        background: '#3EC99A',
+        color: '#fff',
+        borderRadius: 999,
+        fontSize: '0.54rem',
+        fontWeight: 900,
+        lineHeight: 1,
+        padding: '2px 0',
+        textAlign: 'center',
+      }}>
+        {t('solution.tenBundle')}
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateRows: 'repeat(2, 1fr)',
+        gap: 1,
+        alignItems: 'center',
+        justifyItems: 'center',
+      }}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} style={{ fontSize: '0.5rem', lineHeight: 1 }}>{theme.emoji}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OneItem({ theme }: { theme: { emoji: string } }) {
+  return (
+    <span style={{
+      width: 24,
+      height: 24,
+      borderRadius: 8,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(201,182,255,0.22)',
+      border: '1.5px solid rgba(201,182,255,0.5)',
+      fontSize: '0.95rem',
+    }}>
+      {theme.emoji}
+    </span>
+  )
+}
+
+function SubtractionSolution({
+  question,
+  theme,
+}: {
+  question: MathQuestion
+  theme: { name: string; emoji: string }
+}) {
+  const { language, t } = useI18n()
+  const { num1, num2, answer } = question
+  const [stage, setStage] = useState(0)
+  const [countIndex, setCountIndex] = useState(-1)
+  const [muted, setMuted] = useState(false)
+  const runningRef = useRef(false)
+  const mutedRef = useRef(false)
+  mutedRef.current = muted
+
+  const maxDigits = Math.max(String(num1).length, String(num2).length, String(answer).length)
+  const isSingleDigit = maxDigits <= 1
+  const start = splitPlace(num1)
+  const take = splitPlace(num2)
+  const result = splitPlace(answer)
+  const needsBorrow = !isSingleDigit && start.ones < take.ones
+  const regroupedTens = needsBorrow ? start.tens - 1 : start.tens
+  const regroupedOnes = needsBorrow ? start.ones + 10 : start.ones
+
+  async function runSubtraction() {
+    runningRef.current = false
+    stopAll()
+    await delay(80)
+    runningRef.current = true
+    const m = mutedRef.current
+    const alive = () => runningRef.current
+
+    setStage(1)
+    setCountIndex(-1)
+    await say(t('solution.subStart', { num: num1 }), m, language)
+    if (!alive()) return
+
+    if (isSingleDigit) {
+      setStage(2)
+      await say(t('solution.subTake', { num: num2 }), m, language)
+      if (!alive()) return
+      setStage(3)
+      await countRemaining(answer, m, alive, setCountIndex, language, t)
+      if (!alive()) return
+      await say(t('solution.subSingleResult', { num1, num2, answer }), m, language)
+      setCountIndex(-1)
+      return
+    }
+
+    if (needsBorrow) {
+      setStage(2)
+      await say(t('solution.borrowNeed', { take: take.ones, have: start.ones }), m, language)
+      if (!alive()) return
+      setStage(3)
+      await say(t('solution.borrowRegroup'), m, language)
+      if (!alive()) return
+    }
+
+    setStage(needsBorrow ? 4 : 2)
+    await say(t('solution.subtractPlace', { tens: take.tens, ones: take.ones }), m, language)
+    if (!alive()) return
+
+    setStage(needsBorrow ? 5 : 3)
+    await say(t('solution.subPlaceResult', { tens: result.tens, ones: result.ones, num1, num2, answer }), m, language)
+    setCountIndex(-1)
+  }
+
+  useEffect(() => {
+    runSubtraction()
+    return () => { runningRef.current = false; stopAll() }
+  }, [question.id])
+
+  const box = (bg: string, border: string): React.CSSProperties => ({
+    background: bg,
+    border: `2px solid ${border}`,
+    borderRadius: 14,
+    padding: '8px 10px',
+    flexShrink: 0,
+  })
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); setMuted(v => !v) }}
+          style={{ background: muted ? 'rgba(255,118,118,0.15)' : 'rgba(98,214,178,0.15)', border: `2px solid ${muted ? 'rgba(255,118,118,0.4)' : 'rgba(98,214,178,0.4)'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: muted ? '#FF5555' : '#2A9A70' }}>
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); runSubtraction() }}
+          style={{ background: 'rgba(201,182,255,0.15)', border: '2px solid rgba(201,182,255,0.45)', borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: '#7B5FCC' }}>
+          {t('solution.replay')}
+        </motion.button>
+      </div>
+
+      {isSingleDigit ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', minHeight: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : 8 }}
+            style={box('rgba(98,214,178,0.1)', 'rgba(98,214,178,0.4)')}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#2A9A70', marginBottom: 8 }}>
+              {t('solution.subStart', { num: num1 })}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {Array.from({ length: num1 }, (_, i) => (
+                <SubtractionOneItem
+                  key={i}
+                  theme={theme}
+                  removed={stage >= 2 && i >= answer}
+                  highlight={stage >= 3 && i < answer && countIndex === i}
+                />
+              ))}
+            </div>
+          </motion.div>
+
+          {stage >= 2 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              style={box('rgba(255,118,118,0.08)', 'rgba(255,118,118,0.32)')}>
+              <div style={{ fontWeight: 900, color: '#FF5555' }}>
+                {t('solution.subTookFaded', { num: num2 })}
+              </div>
+            </motion.div>
+          )}
+
+          {stage >= 3 && (
+            <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ ...box('rgba(98,214,178,0.16)', 'rgba(98,214,178,0.42)'), textAlign: 'center', marginTop: 'auto' }}>
+              <div style={{ fontWeight: 900, color: '#2A9A70', marginBottom: 4 }}>{t('solution.remainingCount', { count: answer })}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <RemainingPlaceValue theme={theme} value={result} />
+              </div>
+              <div style={{ fontWeight: 900, fontSize: '1.3rem', color: '#2D2D3A' }}>
+                {num1} - {num2} = <span style={{ fontSize: '1.7rem', color: '#3EC99A' }}>{answer}</span>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, paddingRight: 2, paddingBottom: 8 }}>
+          <SubtractionPlaceBox
+            title={`${num1}에서 시작`}
+            theme={theme}
+            tens={stage >= 3 && needsBorrow ? regroupedTens : start.tens}
+            ones={stage >= 3 && needsBorrow ? regroupedOnes : start.ones}
+            removedTens={stage >= (needsBorrow ? 4 : 2) ? take.tens : 0}
+            removedOnes={stage >= (needsBorrow ? 4 : 2) ? take.ones : 0}
+            countIndex={-1}
+            active={stage >= 1}
+            borrowed={needsBorrow && stage >= 3}
+            style={box('rgba(98,214,178,0.1)', 'rgba(98,214,178,0.4)')}
+          />
+
+          {needsBorrow && stage >= 2 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              style={box('rgba(255,229,143,0.22)', 'rgba(255,207,87,0.45)')}>
+              <div style={{ fontWeight: 900, color: '#8A6A00' }}>
+                {t('solution.borrowRegroup')}
+              </div>
+            </motion.div>
+          )}
+
+          {stage >= (needsBorrow ? 4 : 2) && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              style={box('rgba(255,118,118,0.08)', 'rgba(255,118,118,0.32)')}>
+              <div style={{ fontWeight: 900, color: '#FF5555' }}>
+                {t('solution.subtractPlaceFade', { tens: take.tens, ones: take.ones })}
+              </div>
+            </motion.div>
+          )}
+
+          {stage >= (needsBorrow ? 5 : 3) && (
+            <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ ...box('rgba(98,214,178,0.16)', 'rgba(98,214,178,0.42)'), textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <RemainingPlaceValue theme={theme} value={result} />
+              </div>
+              <div style={{ fontWeight: 900, color: '#2A9A70', marginBottom: 6 }}>
+                {t('solution.placeValueSummary', { tens: result.tens, ones: result.ones })}
+              </div>
+              <div style={{ fontWeight: 900, fontSize: '1.3rem', color: '#2D2D3A' }}>
+                {num1} - {num2} = <span style={{ fontSize: '1.7rem', color: '#3EC99A' }}>{answer}</span>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SubtractionOneItem({
+  theme,
+  removed,
+  highlight,
+}: {
+  theme: { emoji: string }
+  removed: boolean
+  highlight: boolean
+}) {
+  return (
+    <motion.span
+      animate={{
+        opacity: removed ? 0.22 : 1,
+        scale: removed ? 0.82 : highlight ? 1.12 : 1,
+        y: removed ? -4 : 0,
+      }}
+      transition={{ type: 'spring', damping: 14, stiffness: 260 }}
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: removed ? 'rgba(255,118,118,0.13)' : highlight ? 'rgba(98,214,178,0.2)' : 'rgba(201,182,255,0.22)',
+        border: removed ? '2px dashed rgba(255,118,118,0.5)' : '2px solid rgba(201,182,255,0.45)',
+        fontSize: '1.35rem',
+        position: 'relative',
+      }}
+    >
+      {theme.emoji}
+      {removed && (
+        <span style={{
+          position: 'absolute',
+          inset: 5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#FF5555',
+          fontSize: '1.2rem',
+          fontWeight: 900,
+        }}>
+          x
+        </span>
+      )}
+    </motion.span>
+  )
+}
+
+function SubtractionPlaceBox({
+  title,
+  theme,
+  tens,
+  ones,
+  removedTens,
+  removedOnes,
+  countIndex,
+  active,
+  borrowed,
+  style,
+}: {
+  title: string
+  theme: { name: string; emoji: string }
+  tens: number
+  ones: number
+  removedTens: number
+  removedOnes: number
+  countIndex: number
+  active: boolean
+  borrowed: boolean
+  style: React.CSSProperties
+}) {
+  const { t } = useI18n()
+  const remainingTens = Math.max(0, tens - removedTens)
+  const remainingOnes = Math.max(0, ones - removedOnes)
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: active ? 1 : 0.35, y: active ? 0 : 8 }}
+      style={style}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#2D2D3A', marginBottom: 6 }}>
+        {title}
+        {borrowed ? <span style={{ color: '#FF9F5B' }}> · {t('solution.borrowBundle')}</span> : null}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {Array.from({ length: tens }, (_, i) => (
+          <FadableTenBundle
+            key={i}
+            theme={theme}
+            removed={i >= remainingTens}
+            highlight={countIndex >= i * 10 && countIndex < i * 10 + 10}
+          />
+        ))}
+        {Array.from({ length: ones }, (_, i) => (
+          <SubtractionOneItem
+            key={i}
+            theme={theme}
+            removed={i >= remainingOnes}
+            highlight={countIndex === remainingTens * 10 + i}
+          />
+        ))}
+      </div>
+      <div style={{ fontSize: '0.75rem', color: '#7A7A9A', fontWeight: 800, marginTop: 5 }}>
+        {t('solution.remainingPlace', { tens: remainingTens, ones: remainingOnes })}
+      </div>
+    </motion.div>
+  )
+}
+
+function FadableTenBundle({
+  theme,
+  removed,
+  highlight,
+}: {
+  theme: { name: string; emoji: string }
+  removed: boolean
+  highlight: boolean
+}) {
+  return (
+    <motion.div animate={{ opacity: removed ? 0.22 : 1, scale: removed ? 0.88 : highlight ? 1.07 : 1 }}
+      style={{
+        position: 'relative',
+        borderRadius: 14,
+        boxShadow: highlight ? '0 0 0 4px rgba(98,214,178,0.22), 0 0 14px rgba(98,214,178,0.3)' : 'none',
+      }}>
+      <TenBundle theme={theme} />
+      {removed && (
+        <span style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#FF5555',
+          fontSize: '2rem',
+          fontWeight: 900,
+        }}>
+          x
+        </span>
+      )}
+    </motion.div>
+  )
+}
+
+function RemainingPlaceValue({
+  theme,
+  value,
+}: {
+  theme: { name: string; emoji: string }
+  value: { tens: number; ones: number }
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',
+      maxWidth: '100%',
+    }}>
+      {Array.from({ length: value.tens }, (_, i) => (
+        <TenBundle key={`t-${i}`} theme={theme} />
+      ))}
+      {Array.from({ length: value.ones }, (_, i) => (
+        <OneItem key={`o-${i}`} theme={theme} />
+      ))}
+    </div>
+  )
+}
+
+async function countRemaining(
+  count: number,
+  muted: boolean,
+  alive: () => boolean,
+  setCountIndex: React.Dispatch<React.SetStateAction<number>>,
+  language: ReturnType<typeof useI18n>['language'],
+  t: ReturnType<typeof useI18n>['t'],
+) {
+  await say(t('solution.countRemaining'), muted, language)
+  if (!alive()) return
+
+  for (let i = 0; i < count; i++) {
+    if (!alive()) return
+    setCountIndex(i)
+    await say(language === 'ko' ? koNum(i + 1) : String(i + 1), muted, language)
+    await delay(140)
+  }
+}
+
+function splitPlace(n: number) {
+  return {
+    tens: Math.floor(n / 10),
+    ones: n % 10,
+  }
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Reward } from '../lib/types'
+import { useI18n } from '../i18n'
 
 interface Props {
   rewards: Reward[]
@@ -8,18 +9,25 @@ interface Props {
 }
 
 export default function RewardPopup({ rewards, onClose }: Props) {
+  const { t } = useI18n()
+
   if (!rewards.length) return null
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       style={{
-        position: 'fixed', inset: 0,
+        position: 'fixed',
+        inset: 0,
         background: 'rgba(45,45,58,0.55)',
         backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 99, padding: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99,
+        padding: 24,
       }}
       onClick={onClose}
     >
@@ -33,7 +41,8 @@ export default function RewardPopup({ rewards, onClose }: Props) {
           background: 'linear-gradient(160deg,#F4FFF9,#EBF8FF,#F5F0FF)',
           borderRadius: 32,
           padding: '36px 28px',
-          maxWidth: 320, width: '100%',
+          maxWidth: 320,
+          width: '100%',
           textAlign: 'center',
           border: '2px solid rgba(255,255,255,0.9)',
           boxShadow: '0 24px 60px rgba(98,214,178,0.25)',
@@ -43,9 +52,11 @@ export default function RewardPopup({ rewards, onClose }: Props) {
           animate={{ rotate: [0, 15, -15, 10, -10, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 1, delay: 0.2 }}
           style={{ fontSize: '4rem', marginBottom: 8 }}
-        >🎊</motion.div>
+        >
+          🎁
+        </motion.div>
         <h2 style={{ fontWeight: 900, fontSize: '1.4rem', color: '#2D2D3A', marginBottom: 20 }}>
-          보상 획득!
+          {t('rewards.popupTitle')}
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
           {rewards.map((r, i) => (
@@ -60,7 +71,9 @@ export default function RewardPopup({ rewards, onClose }: Props) {
                 border: '1.5px solid rgba(255,229,143,0.5)',
                 borderRadius: 16,
                 padding: '12px 18px',
-                display: 'flex', alignItems: 'center', gap: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
               }}
             >
               <span style={{ fontSize: '2rem' }}>{r.emoji}</span>
@@ -74,7 +87,7 @@ export default function RewardPopup({ rewards, onClose }: Props) {
           className="jelly-btn"
           style={{ width: '100%', fontSize: '1rem' }}
         >
-          고마워요! 🙏
+          {t('rewards.thanks')}
         </motion.button>
       </motion.div>
     </motion.div>
@@ -84,16 +97,24 @@ export default function RewardPopup({ rewards, onClose }: Props) {
 export function RewardMini({ emoji, label, count }: { emoji: string; label: string; count: number }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-      <div style={{
-        width: 52, height: 52, borderRadius: 16,
-        background: 'linear-gradient(135deg,rgba(255,229,143,0.4),rgba(255,199,217,0.3))',
-        border: '1.5px solid rgba(255,229,143,0.6)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.5rem',
-        boxShadow: '0 4px 12px rgba(255,229,143,0.3)',
-      }}>{emoji}</div>
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: 16,
+          background: 'linear-gradient(135deg,rgba(255,229,143,0.4),rgba(255,199,217,0.3))',
+          border: '1.5px solid rgba(255,229,143,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          boxShadow: '0 4px 12px rgba(255,229,143,0.3)',
+        }}
+      >
+        {emoji}
+      </div>
       <span style={{ fontSize: '0.7rem', color: '#7A7A9A', fontWeight: 700 }}>{label}</span>
-      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#2D2D3A' }}>×{count}</span>
+      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#2D2D3A' }}>x{count}</span>
     </div>
   )
 }

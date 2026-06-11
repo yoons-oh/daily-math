@@ -1,6 +1,7 @@
 import {
-  ChildProfile, PracticeSession, Reward, StreakInfo, AppSettings, Level
+  ChildProfile, PracticeSession, Reward, StreakInfo, AppSettings, Level, UserRewardState
 } from './types'
+import { getStoredLanguage, isSupportedLanguage } from './language'
 
 // ─── 키 상수 ──────────────────────────────────────────────
 const KEYS = {
@@ -11,6 +12,7 @@ const KEYS = {
   streaks:   'dm_streaks',
   settings:  'dm_settings',
   rateLog:   'dm_rate_log',
+  rewardState: 'dm_reward_state',
 }
 
 // ─── 유틸 ──────────────────────────────────────────────────
@@ -28,11 +30,32 @@ function save(key: string, val: unknown) {
 
 // ─── 프로필 ────────────────────────────────────────────────
 export function getProfiles(): ChildProfile[] {
-  return load<ChildProfile[]>(KEYS.profiles, [])
+  return load<ChildProfile[]>(KEYS.profiles, []).map(profile => ({
+    ...profile,
+    language: isSupportedLanguage(profile.language) ? profile.language : getStoredLanguage(),
+  }))
 }
 export function saveProfile(p: ChildProfile) {
+  const nextProfile = {
+    ...p,
+    language: isSupportedLanguage(p.language) ? p.language : getStoredLanguage(),
+  }
   const list = getProfiles().filter(x => x.id !== p.id)
-  save(KEYS.profiles, [...list, p])
+  save(KEYS.profiles, [...list, nextProfile])
+}
+export function replaceProfiles(profiles: ChildProfile[]) {
+  const existingProfiles = getProfiles()
+  save(KEYS.profiles, profiles.map(profile => {
+    const existing = existingProfiles.find(item => item.id === profile.id)
+    return {
+      ...profile,
+      language: isSupportedLanguage(profile.language)
+        ? profile.language
+        : isSupportedLanguage(existing?.language)
+          ? existing.language
+          : getStoredLanguage(),
+    }
+  }))
 }
 export function deleteProfile(id: string) {
   save(KEYS.profiles, getProfiles().filter(p => p.id !== id))
@@ -41,7 +64,8 @@ export function getCurrentProfileId(): string | null {
   return localStorage.getItem(KEYS.currentId)
 }
 export function setCurrentProfileId(id: string) {
-  localStorage.setItem(KEYS.currentId, id)
+  if (id) localStorage.setItem(KEYS.currentId, id)
+  else localStorage.removeItem(KEYS.currentId)
 }
 export function getCurrentProfile(): ChildProfile | null {
   const id = getCurrentProfileId()
@@ -122,6 +146,22 @@ export function addReward(profileId: string, reward: Reward) {
   if (!all[profileId]) all[profileId] = []
   all[profileId].push(reward)
   save(KEYS.rewards, all)
+}
+
+export function getUserRewardState(profileId: string): UserRewardState {
+  const all = load<Record<string, UserRewardState>>(KEYS.rewardState, {})
+  return all[profileId] ?? {
+    coins: 0,
+    stars: 0,
+    streakDays: 0,
+    lastCompletedDate: null,
+  }
+}
+
+export function saveUserRewardState(profileId: string, state: UserRewardState) {
+  const all = load<Record<string, UserRewardState>>(KEYS.rewardState, {})
+  all[profileId] = state
+  save(KEYS.rewardState, all)
 }
 
 // ─── 설정 ──────────────────────────────────────────────────
