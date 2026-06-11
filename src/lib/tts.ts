@@ -1,10 +1,5 @@
 import { getStoredLanguage, SupportedLanguage, TTS_LANGUAGE_MAP } from './language'
-
-// ─── Google Cloud TTS 전용 ─────────────────────────────────
-// Web Speech API 완전 사용 안함
-// 모든 음성은 Google TTS Audio 객체로만 재생
-
-const API_KEY = import.meta.env.VITE_GOOGLE_TTS_KEY as string | undefined
+import { supabase } from './supabase'
 
 const audioCache = new Map<string, string>()
 let currentAudio: HTMLAudioElement | null = null
@@ -42,25 +37,19 @@ function getTtsLang(language: SupportedLanguage = getStoredLanguage()) {
 }
 
 async function fetchAudio(text: string, language: SupportedLanguage = getStoredLanguage()): Promise<string | null> {
-  if (!API_KEY) return null
+  if (!supabase) return null
   const languageCode = getTtsLang(language)
   const cacheKey = `${languageCode}:${text}`
   if (audioCache.has(cacheKey)) return audioCache.get(cacheKey)!
   try {
-    const res = await fetch(
-      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          input: { text },
-          voice: { languageCode, ssmlGender: 'FEMALE' },
-          audioConfig: { audioEncoding: 'MP3' },
-        }),
-      }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
+    const { data, error } = await supabase.functions.invoke('tts-proxy', {
+      body: {
+        input: { text },
+        voice: { languageCode, ssmlGender: 'FEMALE' },
+        audioConfig: { audioEncoding: 'MP3' },
+      },
+    })
+    if (error || !data?.audioContent) return null
     const url = `data:audio/mp3;base64,${data.audioContent}`
     audioCache.set(cacheKey, url)
     return url
