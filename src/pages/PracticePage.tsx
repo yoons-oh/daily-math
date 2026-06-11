@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getCurrentProfile, saveSession, getTodayDate,
-  updateStreak, appendRateLog, getUserRewardState, saveUserRewardState
+  updateStreak, appendRateLog, getUserRewardState, saveUserRewardState,
+  getTodayQuestionCount,
 } from '../lib/storage'
 import { ChildProfile, MathQuestion, Operation, QuestionResult } from '../lib/types'
 import { generateSession } from '../features/daily-practice/problemGenerator'
@@ -12,12 +13,14 @@ import MathColumnProblem from '../components/MathColumnProblem'
 import VisualSolution from '../components/VisualSolution'
 import MagicBackground from '../components/MagicBackground'
 import HandwritingDigitInput from '../components/HandwritingDigitInput'
+import UpgradeModal from '../components/UpgradeModal'
+import { useSubscription } from '../lib/subscription'
 
 import { say, stopAll, unlockTts } from '../lib/tts'
 import { playSound, unlockSound } from '../lib/sound'
 import { useI18n } from '../i18n'
 
-const TOTAL = 20
+const MAX_QUESTIONS = 20
 const KEYPAD_ROWS = [['7','8','9'],['4','5','6'],['1','2','3'],['clear','0','submit']]
 
 const CORRECT_MSGS = [
@@ -42,10 +45,14 @@ export default function PracticePage() {
   const navigate  = useNavigate()
   const isAdd     = operation === 'add'
   const { t } = useI18n()
+  const { subscription, loading: subLoading } = useSubscription()
 
   const [profile, setProfile]     = useState<ChildProfile | null>(null)
   const [questions, setQuestions] = useState<MathQuestion[]>([])
   const [current, setCurrent]     = useState(0)
+  const [total, setTotal]         = useState(MAX_QUESTIONS)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [isBlocked, setIsBlocked] = useState(false)
   const [inputVal, setInputVal]   = useState('')
   const [digitInputs, setDigitInputs] = useState<string[]>([])
   const [activeDigitIndex, setActiveDigitIndex] = useState(0)
@@ -62,17 +69,30 @@ export default function PracticePage() {
   const submitLockRef = useRef(false)
 
   useEffect(() => {
+    if (subLoading) return
     const p = getCurrentProfile()
     if (!p) { navigate('/profiles'); return }
     setProfile(p)
-    setQuestions(generateSession(p.currentLevel, operation))
+
+    const todayCount = getTodayQuestionCount(p.id)
+    const allowed = Math.max(0, subscription.dailyLimit - todayCount)
+
+    if (allowed === 0) {
+      setIsBlocked(true)
+      setShowUpgradeModal(true)
+      return
+    }
+
+    const sessionTotal = Math.min(allowed, MAX_QUESTIONS)
+    setTotal(sessionTotal)
+    setQuestions(generateSession(p.currentLevel, operation, sessionTotal))
     playSound('magic')
     startTimeRef.current = Date.now()
     questionStart.current = Date.now()
-  }, [])
+  }, [subLoading, subscription.dailyLimit])
 
   const q = questions[current]
-  const progressPct = Math.round((current / TOTAL) * 100)
+  const progressPct = Math.round((current / total) * 100)
   const answerSlotCount = q
     ? Math.max(String(q.num1).length, String(q.num2).length, String(q.answer).length)
     : 1
@@ -217,14 +237,14 @@ export default function PracticePage() {
     setPhase('input')
     setCurrentResult(null)
     questionStart.current = Date.now()
-    if (current + 1 >= TOTAL) finishSession(newResults)
+    if (current + 1 >= total) finishSession(newResults)
     else setCurrent(c => c + 1)
   }
 
   function finishSession(finalResults: QuestionResult[]) {
     if (!profile) return
     const correct = finalResults.filter(r => r.isCorrect).length
-    const rate = Math.round((correct / TOTAL) * 100)
+    const rate = Math.round((correct / total) * 100)
     saveSession({
       profileId: profile.id, date: getTodayDate(), operation,
       level: profile.currentLevel, questions: finalResults,
@@ -281,7 +301,7 @@ export default function PracticePage() {
                 {isAdd ? `✨ ${t('home.addMagic')}` : `🌙 ${t('home.subMagic')}`}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#7A7A9A', fontWeight: 700 }}>
-                {t('practice.problemCounter', { current: current + 1, total: TOTAL })}
+                {t('practice.problemCounter', { current: current + 1, total })}
               </p>
             </div>
             <div style={{
@@ -395,7 +415,7 @@ export default function PracticePage() {
               style={{ padding: '8px 16px 20px', flexShrink: 0 }}>
               <motion.button type="button" whileTap={{ scale: 0.97, y: 3 }} onClick={() => { playSound('tap'); goNext() }}
                 className="jelly-btn jelly-btn-purple" style={{ width: '100%', fontSize: '1.05rem' }}>
-                {current + 1 >= TOTAL ? t('practice.viewResult') : t('practice.gotIt')}
+                {current + 1 >= total ? t('practice.viewResult') : t('practice.gotIt')}
               </motion.button>
             </motion.div>
           )}
@@ -411,7 +431,7 @@ export default function PracticePage() {
               style={{ padding: '8px 16px 20px', flexShrink: 0 }}>
               <motion.button type="button" whileTap={{ scale: 0.97, y: 3 }} onClick={() => { playSound('tap'); goNext() }}
                 className="jelly-btn" style={{ width: '100%', fontSize: '1.05rem' }}>
-                {current + 1 >= TOTAL ? t('practice.viewResult') : t('practice.nextProblem')}
+                {current + 1 >= total ? t('practice.viewResult') : t('practice.nextProblem')}
               </motion.button>
             </motion.div>
           )}
@@ -507,6 +527,12 @@ export default function PracticePage() {
           )}
         </AnimatePresence>
       </div>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => { setShowUpgradeModal(false); navigate(-1) }}
+        isBlocked={isBlocked}
+      />
 
       <AnimatePresence>
         {showHandwritingWarning && (

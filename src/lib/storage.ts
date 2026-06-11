@@ -176,6 +176,13 @@ export function saveSettings(s: AppSettings) {
   save(KEYS.settings, s)
 }
 
+// ─── 오늘 푼 문제 수 ─────────────────────────────────────────
+export function getTodayQuestionCount(profileId: string): number {
+  const today = getTodayDate()
+  return getSessionByDate(profileId, today)
+    .reduce((sum, s) => sum + s.questions.length, 0)
+}
+
 // ─── 오늘 학습 완료 여부 ─────────────────────────────────────
 export function isTodayCompleted(profileId: string): boolean {
   const today = getTodayDate()

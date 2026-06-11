@@ -165,11 +165,11 @@ export function generateQuestion(
 }
 
 // ─── 세션 20문제 생성 ────────────────────────────────────
-export function generateSession(level: Level, operation: Operation): MathQuestion[] {
+export function generateSession(level: Level, operation: Operation, count = 20): MathQuestion[] {
   const questions: MathQuestion[] = []
   const usedIds = new Set<string>()
 
-  const TOTAL = 20
+  const TOTAL = count
 
   // 받아올림/내림 있는 문제를 전체의 약 40~50%로 조정
   const carryCount = LEVEL_CONFIGS[level].allowCarry
