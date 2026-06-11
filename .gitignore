@@ -7,13 +7,6 @@ dist
 
 .vercel
 
-# Images
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
-
 # Documents
 *.docx
 *.xlsx
