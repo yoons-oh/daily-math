@@ -20,18 +20,19 @@ export function isSupportedLanguage(value: unknown): value is SupportedLanguage 
 }
 
 export function detectBrowserLanguage(): SupportedLanguage {
-  if (typeof navigator === 'undefined') return 'ko'
-  const lang = navigator.language.toLowerCase()
-
-  if (lang.startsWith('ko')) return 'ko'
-  if (lang.startsWith('en')) return 'en'
-  if (lang.startsWith('zh')) return 'zh-CN'
-  if (lang.startsWith('vi')) return 'vi'
-  if (lang.startsWith('th')) return 'th'
-  if (lang.startsWith('id')) return 'id'
-  if (lang.startsWith('es')) return 'es'
-
-  return 'ko'
+  if (typeof navigator === 'undefined') return 'en'
+  const langs = navigator.languages?.length ? navigator.languages : [navigator.language]
+  for (const raw of langs) {
+    const lang = raw.toLowerCase()
+    if (lang.startsWith('ko')) return 'ko'
+    if (lang.startsWith('en')) return 'en'
+    if (lang.startsWith('zh')) return 'zh-CN'
+    if (lang.startsWith('vi')) return 'vi'
+    if (lang.startsWith('th')) return 'th'
+    if (lang.startsWith('id')) return 'id'
+    if (lang.startsWith('es')) return 'es'
+  }
+  return 'en'
 }
 
 export function getStoredLanguage(): SupportedLanguage {
