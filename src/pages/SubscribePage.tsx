@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
 import { useSubscription, clearSubscriptionCache } from '../lib/subscription'
 import { supabase } from '../lib/supabase'
+import { useI18n } from '../i18n'
 
 const PRO_PRICE = '₩2,000'
 const PRO_SKU = 'pro_monthly'
@@ -18,6 +19,7 @@ function isTwa(): boolean {
 
 export default function SubscribePage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { subscription, refresh } = useSubscription()
   const [purchasing, setPurchasing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,32 +40,31 @@ export default function SubscribePage() {
       }).getDigitalGoodsService?.('https://play.google.com/billing')
 
       if (!service) {
-        setError('Google Play 결제를 사용할 수 없어요. 앱을 Play Store에서 설치했는지 확인해주세요.')
+        setError(t('upgrade.errNotAvailable') || 'Google Play billing is not available.')
         setPurchasing(false)
         return
       }
 
       const details = await service.getDetails([PRO_SKU])
       if (!details.length) {
-        setError('구독 상품을 찾을 수 없어요.')
+        setError(t('upgrade.errNotFound') || 'Subscription product not found.')
         setPurchasing(false)
         return
       }
 
       const request = new PaymentRequest(
         [{ supportedMethods: 'https://play.google.com/billing', data: { sku: PRO_SKU } }],
-        { total: { label: `매일수학 Pro ${PRO_PRICE}/월`, amount: { currency: 'KRW', value: '2000' } } },
+        { total: { label: `Daily Math Pro ${PRO_PRICE}/mo`, amount: { currency: 'KRW', value: '2000' } } },
       )
 
       const paymentResponse = await request.show()
       const token = (paymentResponse.details as { token: string }).token
 
-      // 서버 검증
       if (supabase) {
         const { error: fnError } = await supabase.functions.invoke('verify-play-purchase', {
           body: { token, sku: PRO_SKU },
         })
-        if (fnError) throw new Error('구매 검증에 실패했어요.')
+        if (fnError) throw new Error(t('upgrade.errVerify') || 'Purchase verification failed.')
       }
 
       await paymentResponse.complete('success')
@@ -71,7 +72,7 @@ export default function SubscribePage() {
       refresh()
       navigate('/subscribe/success')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : '알 수 없는 오류가 발생했어요.'
+      const msg = e instanceof Error ? e.message : (t('upgrade.errUnknown') || 'An unknown error occurred.')
       setError(msg)
       setPurchasing(false)
     }
@@ -83,22 +84,29 @@ export default function SubscribePage() {
         <MagicBackground />
         <div className="relative z-10 flex flex-col items-center" style={{ padding: '0 24px', maxWidth: 400, width: '100%', textAlign: 'center' }}>
           <div style={{ fontSize: '4rem', marginBottom: 16 }}>✨</div>
-          <div style={{ fontWeight: 900, fontSize: '1.4rem', color: '#2D2D3A', marginBottom: 8 }}>이미 Pro 멤버예요!</div>
+          <div style={{ fontWeight: 900, fontSize: '1.4rem', color: '#2D2D3A', marginBottom: 8 }}>{t('upgrade.alreadyPro')}</div>
           <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.9rem', marginBottom: 24 }}>
-            매일 20문제를 풀 수 있어요.
+            {t('upgrade.alreadyProDesc')}
             {subscription.periodEnd && (
               <div style={{ marginTop: 4 }}>
-                갱신일: {subscription.periodEnd.toLocaleDateString('ko-KR')}
+                {subscription.periodEnd.toLocaleDateString()}
               </div>
             )}
           </div>
           <motion.button whileTap={{ scale: 0.97, y: 3 }} onClick={() => navigate('/home')} className="jelly-btn" style={{ width: '100%' }}>
-            홈으로 돌아가기 🏰
+            {t('upgrade.backHome')}
           </motion.button>
         </div>
       </div>
     )
   }
+
+  const benefits = [
+    { icon: '📚', text: t('upgrade.benefit1') },
+    { icon: '🏆', text: t('upgrade.benefit2') },
+    { icon: '📊', text: t('upgrade.benefit3') },
+    { icon: '❌', text: t('upgrade.benefit4') },
+  ]
 
   return (
     <div className="app-container">
@@ -112,55 +120,47 @@ export default function SubscribePage() {
               style={{ width: 42, height: 42, borderRadius: 14, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', border: '1.5px solid rgba(255,255,255,0.9)', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', flexShrink: 0 }}>
               ←
             </motion.button>
-            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#2D2D3A' }}>✨ Pro 업그레이드</div>
+            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#2D2D3A' }}>✨ {t('upgrade.pageTitle')}</div>
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px 32px' }}>
 
-          {/* 별 장식 */}
           <motion.div animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 3, repeat: Infinity }}
             style={{ textAlign: 'center', fontSize: '4rem', marginBottom: 8 }}>
             🌟
           </motion.div>
 
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#2D2D3A', marginBottom: 6 }}>더 많이 배워요!</div>
-            <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.9rem' }}>Pro로 업그레이드하면 하루 20문제를 풀 수 있어요</div>
+            <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#2D2D3A', marginBottom: 6 }}>{t('upgrade.headline')}</div>
+            <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.9rem' }}>{t('upgrade.subheadline')}</div>
           </div>
 
           {/* 플랜 비교 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-            {/* 무료 */}
             <div style={{ borderRadius: 22, padding: '20px 16px', background: 'rgba(240,240,250,0.7)', border: '1.5px solid rgba(180,180,210,0.3)', textAlign: 'center' }}>
               <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.8rem', marginBottom: 8 }}>FREE</div>
               <div style={{ fontWeight: 900, fontSize: '2.2rem', color: '#2D2D3A', lineHeight: 1 }}>2</div>
-              <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.78rem', marginTop: 2 }}>문제 / 하루</div>
-              <div style={{ marginTop: 12, fontWeight: 900, fontSize: '1rem', color: '#8B8DA4' }}>무료</div>
+              <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.78rem', marginTop: 2 }}>{t('upgrade.problemsPerDay')}</div>
+              <div style={{ marginTop: 12, fontWeight: 900, fontSize: '1rem', color: '#8B8DA4' }}>{t('upgrade.freePlan')}</div>
             </div>
-            {/* Pro */}
             <motion.div
               animate={{ boxShadow: ['0 0 0 0 rgba(98,214,178,0)', '0 0 0 6px rgba(98,214,178,0.18)', '0 0 0 0 rgba(98,214,178,0)'] }}
               transition={{ duration: 2.4, repeat: Infinity }}
               style={{ borderRadius: 22, padding: '20px 16px', background: 'linear-gradient(135deg,rgba(98,214,178,0.18),rgba(62,201,154,0.12))', border: '2px solid rgba(98,214,178,0.55)', textAlign: 'center', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#62D6B2,#3EC99A)', borderRadius: 999, padding: '3px 12px', fontSize: '0.72rem', fontWeight: 900, color: '#fff', whiteSpace: 'nowrap' }}>추천 ✨</div>
+              <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#62D6B2,#3EC99A)', borderRadius: 999, padding: '3px 12px', fontSize: '0.72rem', fontWeight: 900, color: '#fff', whiteSpace: 'nowrap' }}>{t('upgrade.recommended')}</div>
               <div style={{ fontWeight: 900, color: '#3EC99A', fontSize: '0.8rem', marginBottom: 8 }}>PRO</div>
               <div style={{ fontWeight: 900, fontSize: '2.2rem', color: '#2D2D3A', lineHeight: 1 }}>20</div>
-              <div style={{ fontWeight: 900, color: '#3EC99A', fontSize: '0.78rem', marginTop: 2 }}>문제 / 하루</div>
-              <div style={{ marginTop: 12, fontWeight: 900, fontSize: '1rem', color: '#2D2D3A' }}>₩2,000<span style={{ fontSize: '0.72rem', color: '#7A7A9A', fontWeight: 800 }}>/월</span></div>
+              <div style={{ fontWeight: 900, color: '#3EC99A', fontSize: '0.78rem', marginTop: 2 }}>{t('upgrade.problemsPerDay')}</div>
+              <div style={{ marginTop: 12, fontWeight: 900, fontSize: '1rem', color: '#2D2D3A' }}>{PRO_PRICE}<span style={{ fontSize: '0.72rem', color: '#7A7A9A', fontWeight: 800 }}>/월</span></div>
             </motion.div>
           </div>
 
           {/* 혜택 목록 */}
           <div className="glass-card" style={{ padding: '16px 18px', marginBottom: 24 }}>
-            <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '0.9rem', marginBottom: 12 }}>Pro 혜택</div>
-            {[
-              { icon: '📚', text: '하루 20문제 (무료의 10배)' },
-              { icon: '🏆', text: '더 많은 별·코인 보상 획득' },
-              { icon: '📊', text: '연속 학습 기록 극대화' },
-              { icon: '❌', text: '광고 없음 (준비 중)' },
-            ].map((b, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < 3 ? 8 : 0 }}>
+            <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '0.9rem', marginBottom: 12 }}>{t('upgrade.benefits')}</div>
+            {benefits.map((b, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < benefits.length - 1 ? 8 : 0 }}>
                 <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{b.icon}</span>
                 <span style={{ fontWeight: 800, color: '#4A4A6A', fontSize: '0.88rem' }}>{b.text}</span>
               </div>
@@ -186,16 +186,15 @@ export default function SubscribePage() {
                 marginBottom: 10,
               }}
             >
-              {purchasing ? '처리 중...' : `Google Play로 구독하기 → ${PRO_PRICE}/월`}
+              {purchasing ? t('upgrade.processing') : t('upgrade.subscribeCta', { price: PRO_PRICE })}
             </motion.button>
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div className="glass-card" style={{ padding: '20px 18px', marginBottom: 16 }}>
                 <div style={{ fontSize: '2.4rem', marginBottom: 8 }}>📱</div>
-                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1rem', marginBottom: 6 }}>앱에서 구독할 수 있어요</div>
+                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1rem', marginBottom: 6 }}>{t('upgrade.webTitle')}</div>
                 <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.84rem', lineHeight: 1.55 }}>
-                  Google Play Store에서 앱을 설치하면<br />
-                  간편하게 구독할 수 있어요
+                  {t('upgrade.webDesc')}
                 </div>
               </div>
               <motion.button
@@ -209,7 +208,7 @@ export default function SubscribePage() {
                   marginBottom: 10,
                 }}
               >
-                📲 Play Store에서 앱 받기
+                📲 {t('upgrade.playStoreCta')}
               </motion.button>
             </div>
           )}
@@ -218,7 +217,7 @@ export default function SubscribePage() {
             onClick={() => navigate(-1)}
             style={{ width: '100%', height: 44, borderRadius: 14, border: 'none', background: 'transparent', color: '#8B8DA4', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}
           >
-            나중에 할게요
+            {t('upgrade.later')}
           </button>
 
         </div>
