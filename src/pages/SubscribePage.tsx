@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
-import { useSubscription, clearSubscriptionCache } from '../lib/subscription'
+import { useSubscription, clearSubscriptionCache, FREE_PLAN } from '../lib/subscription'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
 
@@ -140,7 +140,7 @@ export default function SubscribePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
             <div style={{ borderRadius: 22, padding: '20px 16px', background: 'rgba(240,240,250,0.7)', border: '1.5px solid rgba(180,180,210,0.3)', textAlign: 'center' }}>
               <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.8rem', marginBottom: 8 }}>FREE</div>
-              <div style={{ fontWeight: 900, fontSize: '2.2rem', color: '#2D2D3A', lineHeight: 1 }}>2</div>
+              <div style={{ fontWeight: 900, fontSize: '2.2rem', color: '#2D2D3A', lineHeight: 1 }}>{FREE_PLAN.dailyLimit}</div>
               <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.78rem', marginTop: 2 }}>{t('upgrade.problemsPerDay')}</div>
               <div style={{ marginTop: 12, fontWeight: 900, fontSize: '1rem', color: '#8B8DA4' }}>{t('upgrade.freePlan')}</div>
             </div>

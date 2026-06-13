@@ -2,6 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../i18n'
+import { FREE_PLAN } from '../lib/subscription'
 
 interface UpgradeModalProps {
   open: boolean
@@ -54,7 +55,7 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
             <div style={{ fontWeight: 900, fontSize: '1.25rem', color: '#2D2D3A', marginBottom: 8 }}>
               {isBlocked
                 ? t('upgrade.blockedTitle')
-                : t('upgrade.limitTitle', { count: 2 })}
+                : t('upgrade.limitTitle', { count: FREE_PLAN.dailyLimit })}
             </div>
 
             <div style={{
@@ -63,7 +64,7 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
               borderRadius: 18, padding: '14px 16px', marginBottom: 20,
             }}>
               <p style={{ color: '#4A4A6A', fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
-                {t('upgrade.descFree', { free: 2 })}{' '}
+                {t('upgrade.descFree', { free: FREE_PLAN.dailyLimit })}{' '}
                 {t('upgrade.descPro', { pro: 20 })}
               </p>
             </div>
@@ -75,7 +76,7 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
                 border: '1.5px solid rgba(180,180,210,0.3)',
               }}>
                 <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.78rem', marginBottom: 4 }}>FREE</div>
-                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>2</div>
+                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>{FREE_PLAN.dailyLimit}</div>
                 <div style={{ color: '#8B8DA4', fontSize: '0.72rem', fontWeight: 800 }}>{t('upgrade.perDay')}</div>
               </div>
               <div style={{

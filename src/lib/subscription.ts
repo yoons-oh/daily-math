@@ -13,7 +13,7 @@ export interface Subscription {
 export const FREE_PLAN: Subscription = {
   status: 'free',
   isPro: false,
-  dailyLimit: 2,
+  dailyLimit: 5,
   periodEnd: null,
 }
 
