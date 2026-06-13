@@ -450,33 +450,63 @@ export default function Home() {
                   boxShadow: `0 8px 0 ${item.shadow}, 0 18px 34px ${item.glow}`,
                 }}
               >
-                <img
-                  src={item.image}
-                  alt={copy.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                    objectFit: 'cover',
-                    objectPosition: 'center top',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.34), inset 0 -16px 22px rgba(0,0,0,0.04)',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <div
-                  className="home-card-text"
-                  style={getMenuTextStyle(item.route, item.textColor)}
-                >
-                  <div className="home-card-title">{copy.title}</div>
-                  <div className="home-card-sub">{copy.sub}</div>
-                </div>
+                {item.route === '/concept' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+                    <img
+                      src={item.image}
+                      alt={copy.title}
+                      style={{
+                        flex: 1,
+                        width: '100%',
+                        minHeight: 0,
+                        display: 'block',
+                        objectFit: 'cover',
+                        objectPosition: 'center top',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div style={{
+                      flexShrink: 0,
+                      padding: '5px 12px 7px',
+                      background: 'rgba(90, 58, 200, 0.82)',
+                      backdropFilter: 'blur(4px)',
+                      textAlign: 'left',
+                    }}>
+                      <div className="home-card-title" style={{ color: '#fff', fontSize: '0.82rem' }}>{copy.title}</div>
+                      <div className="home-card-sub" style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.7rem' }}>{copy.sub}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={item.image}
+                      alt={copy.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'block',
+                        objectFit: 'cover',
+                        objectPosition: 'center top',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.34), inset 0 -16px 22px rgba(0,0,0,0.04)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      className="home-card-text"
+                      style={getMenuTextStyle(item.route, item.textColor)}
+                    >
+                      <div className="home-card-title">{copy.title}</div>
+                      <div className="home-card-sub">{copy.sub}</div>
+                    </div>
+                  </>
+                )}
               </motion.button>
               )
             })}
