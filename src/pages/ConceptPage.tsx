@@ -95,7 +95,7 @@ export default function ConceptPage() {
           <h1 style={{ fontWeight: 900, fontSize: '1.2rem', color: '#2D2D3A' }}>🔮 {t('concept.title')}</h1>
         </div>
         <p style={{ color: '#7A7A9A', marginBottom: 16, fontWeight: 600, fontSize: '0.9rem' }}>{t('concept.prompt')}</p>
-              <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {CONCEPTS.map((c, i) => (
             <motion.button
               key={c.id}
@@ -133,6 +133,45 @@ export default function ConceptPage() {
             </motion.button>
           ))}
         </div>
+
+        {/* 구구단 배우기 버튼 */}
+        <motion.button
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.36 }}
+          whileTap={{ scale: 0.96, y: 5 }}
+          onClick={() => navigate('/times-table')}
+          style={{
+            marginTop: 12, width: '100%', borderRadius: 22, padding: 0,
+            border: '2px solid rgba(255,255,255,0.85)', cursor: 'pointer',
+            aspectRatio: '2.5 / 1',
+            background: 'linear-gradient(135deg,#A78BFA 0%,#7C3AED 100%)',
+            boxShadow: '0 8px 0 #5B21B6, 0 12px 26px rgba(167,139,250,0.38)',
+            position: 'relative', overflow: 'hidden',
+          }}
+        >
+          <img
+            src="/concepts/study-times-table.png"
+            alt={t('concept.timesTable')}
+            style={{ width:'100%', height:'100%', display:'block', objectFit:'cover', objectPosition:'center', pointerEvents:'none' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <div style={{
+            position:'absolute', inset:0,
+            boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.5)',
+            pointerEvents:'none',
+          }} />
+          <div style={{
+            position:'absolute', right:'6%', bottom:'14%',
+            color:'#fff', fontWeight:900,
+            fontSize:'clamp(0.9rem, 2.8vw, 1.2rem)',
+            textShadow:'0 2px 8px rgba(0,0,0,0.3)',
+            textAlign:'center', pointerEvents:'none',
+          }}>
+            <div style={{ fontSize:'1.4rem', marginBottom:2 }}>⭐</div>
+            {t('concept.timesTable')}
+          </div>
+        </motion.button>
       </div>
       <BottomNav />
     </div>

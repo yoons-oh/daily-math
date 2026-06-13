@@ -138,6 +138,7 @@ const ko = {
     subBorrow: '받아내림 뺄셈',
     replay: '다시 듣기',
     done: '다 배웠어요! 🎉',
+    timesTable: '구구단 배우기',
   },
   result: {
     todayResult: '오늘의 결과',
@@ -461,6 +462,7 @@ const en = {
     subBorrow: 'Subtraction With Borrowing',
     replay: 'Replay narration',
     done: 'All learned! 🎉',
+    timesTable: 'Times Tables',
   },
   result: {
     todayResult: "Today's Result",
@@ -675,7 +677,7 @@ const zhCN: TranslationTree = {
   auth: { ...en.auth, tagline: '每天练习基础运算。', login: '登录', signup: '注册' },
   bottomNav: { home: '首页', learn: '学习', rewards: '奖励', history: '记录', aria: '底部菜单' },
   home: { ...en.home, addMagic: '加法魔法', subMagic: '减法魔法', learnMagic: '学习魔法', rewards: '奖励宝箱' },
-  concept: { title: '学习魔法', prompt: '想学习哪种魔法？', addBasic: '两位数加法', addCarry: '进位加法', subBasic: '两位数减法', subBorrow: '借位减法' },
+  concept: { title: '学习魔法', prompt: '想学习哪种魔法？', addBasic: '两位数加法', addCarry: '进位加法', subBasic: '两位数减法', subBorrow: '借位减法', timesTable: '学九九表' },
 }
 
 const vi: TranslationTree = {
@@ -684,7 +686,7 @@ const vi: TranslationTree = {
   auth: { ...en.auth, tagline: 'Luyện toán cơ bản mỗi ngày.', login: 'Đăng nhập', signup: 'Đăng ký' },
   bottomNav: { home: 'Trang chủ', learn: 'Học', rewards: 'Thưởng', history: 'Lịch sử', aria: 'Menu dưới' },
   home: { ...en.home, addMagic: 'Phép cộng', subMagic: 'Phép trừ', learnMagic: 'Học phép thuật', rewards: 'Kho thưởng' },
-  concept: { title: 'Học phép thuật', prompt: 'Con muốn học phép nào?', addBasic: 'Cộng hai chữ số', addCarry: 'Cộng có nhớ', subBasic: 'Trừ hai chữ số', subBorrow: 'Trừ có mượn' },
+  concept: { title: 'Học phép thuật', prompt: 'Con muốn học phép nào?', addBasic: 'Cộng hai chữ số', addCarry: 'Cộng có nhớ', subBasic: 'Trừ hai chữ số', subBorrow: 'Trừ có mượn', timesTable: 'Học bảng nhân' },
 }
 
 const th: TranslationTree = {
@@ -693,7 +695,7 @@ const th: TranslationTree = {
   auth: { ...en.auth, tagline: 'ฝึกคณิตพื้นฐานทุกวัน', login: 'เข้าสู่ระบบ', signup: 'สมัครสมาชิก' },
   bottomNav: { home: 'หน้าแรก', learn: 'เรียนรู้', rewards: 'รางวัล', history: 'ประวัติ', aria: 'เมนูล่าง' },
   home: { ...en.home, addMagic: 'เวทบวก', subMagic: 'เวทลบ', learnMagic: 'เรียนเวทมนตร์', rewards: 'คลังรางวัล' },
-  concept: { title: 'เรียนเวทมนตร์', prompt: 'อยากเรียนเวทไหน?', addBasic: 'บวกเลขสองหลัก', addCarry: 'บวกแบบทด', subBasic: 'ลบเลขสองหลัก', subBorrow: 'ลบแบบยืม' },
+  concept: { title: 'เรียนเวทมนตร์', prompt: 'อยากเรียนเวทไหน?', addBasic: 'บวกเลขสองหลัก', addCarry: 'บวกแบบทด', subBasic: 'ลบเลขสองหลัก', subBorrow: 'ลบแบบยืม', timesTable: 'ท่องสูตรคูณ' },
 }
 
 const id: TranslationTree = {
@@ -702,7 +704,7 @@ const id: TranslationTree = {
   auth: { ...en.auth, tagline: 'Latih matematika dasar setiap hari.', login: 'Masuk', signup: 'Daftar' },
   bottomNav: { home: 'Beranda', learn: 'Belajar', rewards: 'Hadiah', history: 'Riwayat', aria: 'Menu bawah' },
   home: { ...en.home, addMagic: 'Sihir Tambah', subMagic: 'Sihir Kurang', learnMagic: 'Belajar Sihir', rewards: 'Gudang Hadiah' },
-  concept: { title: 'Belajar Sihir', prompt: 'Sihir apa yang mau dipelajari?', addBasic: 'Penjumlahan Dua Digit', addCarry: 'Penjumlahan Menyimpan', subBasic: 'Pengurangan Dua Digit', subBorrow: 'Pengurangan Meminjam' },
+  concept: { title: 'Belajar Sihir', prompt: 'Sihir apa yang mau dipelajari?', addBasic: 'Penjumlahan Dua Digit', addCarry: 'Penjumlahan Menyimpan', subBasic: 'Pengurangan Dua Digit', subBorrow: 'Pengurangan Meminjam', timesTable: 'Pelajari Perkalian' },
 }
 
 const es: TranslationTree = {
@@ -711,7 +713,7 @@ const es: TranslationTree = {
   auth: { ...en.auth, tagline: 'Practica matemáticas básicas cada día.', login: 'Iniciar sesión', signup: 'Registrarse' },
   bottomNav: { home: 'Inicio', learn: 'Aprender', rewards: 'Premios', history: 'Historial', aria: 'Menú inferior' },
   home: { ...en.home, addMagic: 'Magia de Suma', subMagic: 'Magia de Resta', learnMagic: 'Aprender Magia', rewards: 'Cofre de Premios' },
-  concept: { title: 'Aprender Magia', prompt: '¿Qué magia aprendemos?', addBasic: 'Suma de Dos Dígitos', addCarry: 'Suma con Llevada', subBasic: 'Resta de Dos Dígitos', subBorrow: 'Resta con Préstamo' },
+  concept: { title: 'Aprender Magia', prompt: '¿Qué magia aprendemos?', addBasic: 'Suma de Dos Dígitos', addCarry: 'Suma con Llevada', subBasic: 'Resta de Dos Dígitos', subBorrow: 'Resta con Préstamo', timesTable: 'Tablas de Multiplicar' },
 }
 
 const ja: TranslationTree = {
@@ -720,7 +722,7 @@ const ja: TranslationTree = {
   auth: { ...en.auth, tagline: '毎日算数の基礎を練習しよう。', login: 'ログイン', signup: '新規登録' },
   bottomNav: { home: 'ホーム', learn: '学ぶ', rewards: 'ご褒美', history: 'きろく', aria: 'ナビメニュー' },
   home: { ...en.home, addMagic: 'たし算の魔法', subMagic: 'ひき算の魔法', learnMagic: '魔法を学ぶ', rewards: '宝箱' },
-  concept: { title: '魔法を学ぶ', prompt: 'どの魔法を学ぶ？', addBasic: '2桁のたし算', addCarry: '繰り上がりのたし算', subBasic: '2桁のひき算', subBorrow: '繰り下がりのひき算' },
+  concept: { title: '魔法を学ぶ', prompt: 'どの魔法を学ぶ？', addBasic: '2桁のたし算', addCarry: '繰り上がりのたし算', subBasic: '2桁のひき算', subBorrow: '繰り下がりのひき算', timesTable: '九九を学ぶ' },
 }
 
 const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>> = {
@@ -1016,6 +1018,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: '借位减法',
       replay: '再听一次',
       done: '学完了！',
+      timesTable: '学九九表',
     },
     practice: {
       loading: '正在准备魔法题...',
@@ -1243,6 +1246,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: 'Trừ có mượn',
       replay: 'Nghe lại',
       done: 'Học xong rồi!',
+      timesTable: 'Học bảng nhân',
     },
     practice: {
       loading: 'Đang chuẩn bị câu hỏi...',
@@ -1470,6 +1474,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: 'ลบมีการยืม',
       replay: 'ฟังอีกครั้ง',
       done: 'เรียนครบแล้ว!',
+      timesTable: 'ท่องสูตรคูณ',
     },
     practice: {
       loading: 'กำลังเตรียมโจทย์...',
@@ -1697,6 +1702,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: 'Pengurangan Meminjam',
       replay: 'Putar ulang',
       done: 'Selesai belajar!',
+      timesTable: 'Pelajari Perkalian',
     },
     practice: {
       loading: 'Menyiapkan soal ajaib...',
@@ -1924,6 +1930,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: 'Resta con Préstamo',
       replay: 'Repetir narración',
       done: '¡Todo aprendido!',
+      timesTable: 'Tablas de Multiplicar',
     },
     practice: {
       loading: 'Preparando preguntas mágicas...',
@@ -2151,6 +2158,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       subBorrow: '繰り下がりのひき算',
       replay: 'もう一度聞く',
       done: '学習完了！',
+      timesTable: '九九を学ぶ',
     },
     practice: {
       loading: '問題を準備中...',

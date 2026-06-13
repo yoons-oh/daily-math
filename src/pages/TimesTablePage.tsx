@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
+import { getTimesTableMastery } from './TimesTableStudyPage'
 
 const DANS = [2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -18,6 +19,11 @@ const DAN_COLORS = [
 
 export default function TimesTablePage() {
   const navigate = useNavigate()
+  const [mastery, setMastery] = useState<Set<number>>(new Set())
+
+  useEffect(() => {
+    setMastery(getTimesTableMastery())
+  }, [])
 
   return (
     <div className="app-container" style={{ background: 'linear-gradient(160deg,#F7FFF9 0%,#EEF8FF 45%,#F8F2FF 100%)' }}>
@@ -40,6 +46,7 @@ export default function TimesTablePage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {DANS.map((dan, i) => {
               const c = DAN_COLORS[i % DAN_COLORS.length]
+              const isMastered = mastery.has(dan)
               return (
                 <motion.button
                   key={dan}
@@ -53,8 +60,19 @@ export default function TimesTablePage() {
                     background: c.gradient,
                     boxShadow: `0 6px 0 ${c.shadow}, 0 14px 28px ${c.glow}`,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    position: 'relative',
                   }}
                 >
+                  {isMastered && (
+                    <div style={{
+                      position: 'absolute', top: 8, right: 10,
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.95)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.8rem', fontWeight: 900, color: '#16A34A',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    }}>✓</div>
+                  )}
                   <span style={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>{dan}단</span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.85)' }}>
                     {dan}×1 ~ {dan}×9
