@@ -193,6 +193,32 @@ const es: ConceptLessonMap = {
   ],
 }
 
+const ja: ConceptLessonMap = {
+  'add-basic': [
+    { desc: 'まず一の位をたします！', calc: '4 + 1 = 5', hl: 'ones', showAns: false, carry: ['', ''], voice: 'まず一の位をたします。4たす1は5です。' },
+    { desc: '次に十の位をたします！', calc: '2 + 3 = 5', hl: 'tens', showAns: false, carry: ['', ''], voice: '次は十の位をたします。2たす3は5です。' },
+    { desc: '答えは55です！', calc: '24 + 31 = 55', hl: 'all', showAns: true, carry: ['', ''], voice: 'なので24たす31の答えは55です。' },
+  ],
+  'add-carry': [
+    { desc: '一の位：8 + 7 = 15', calc: '8 + 7 = 15', hl: 'ones', showAns: false, carry: ['', ''], voice: 'まず一の位からたします。8たす7は15です。' },
+    { desc: '5は下に、1は十の位へくり上げます！', calc: 'くり上がり：1 ↑', hl: 'carry', showAns: false, carry: ['¹', ''], voice: '15の一の位5は下に書き、十の位の1は上にくり上げます。' },
+    { desc: '十の位：4 + 3 + くり上がり(1) = 8', calc: '4 + 3 + 1 = 8', hl: 'tens', showAns: false, carry: ['¹', ''], voice: '次に十の位をたします。4たす3にくり上がりの1を加えると8です。' },
+    { desc: '答えは85です！', calc: '48 + 37 = 85', hl: 'all', showAns: true, carry: ['¹', ''], voice: 'なので48たす37の答えは85です。くり上がりのたし算できた！' },
+  ],
+  'sub-basic': [
+    { desc: 'まず一の位をひきます！', calc: '5 - 2 = 3', hl: 'ones', showAns: false, carry: ['', ''], voice: 'まず一の位をひきます。5ひく2は3です。' },
+    { desc: '次に十の位をひきます！', calc: '7 - 3 = 4', hl: 'tens', showAns: false, carry: ['', ''], voice: '次は十の位をひきます。7ひく3は4です。' },
+    { desc: '答えは43です！', calc: '75 - 32 = 43', hl: 'all', showAns: true, carry: ['', ''], voice: 'なので75ひく32の答えは43です。' },
+  ],
+  'sub-borrow': [
+    { desc: '一の位：2から4はひけません。', calc: '2 < 4', hl: 'ones', showAns: false, carry: ['', ''], voice: '一の位を見てください。2から4はひけません。' },
+    { desc: '十の位から10を借ります。6 → 5', calc: '十の位 6 → 5', hl: 'borrow', showAns: false, carry: ['⁵', ''], voice: 'だから十の位から10を借ります。十の位の6が5になります。' },
+    { desc: '一の位：12 - 4 = 8', calc: '12 - 4 = 8', hl: 'ones', showAns: false, carry: ['⁵', ''], voice: '借りた10と2を合わせると12。12ひく4は8です。' },
+    { desc: '十の位：5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: '次に十の位をひきます。5ひく2は3です。' },
+    { desc: '答えは38です！', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'なので62ひく24の答えは38です。' },
+  ],
+}
+
 const lessons: Record<SupportedLanguage, ConceptLessonMap> = {
   ko,
   en,
@@ -201,6 +227,7 @@ const lessons: Record<SupportedLanguage, ConceptLessonMap> = {
   th,
   id,
   es,
+  ja,
 }
 
 export function getConceptLessonSteps(conceptId: string, language: SupportedLanguage): ConceptLessonStep[] {

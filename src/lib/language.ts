@@ -1,6 +1,6 @@
-export type SupportedLanguage = 'ko' | 'en' | 'zh-CN' | 'vi' | 'th' | 'id' | 'es'
+export type SupportedLanguage = 'ko' | 'en' | 'zh-CN' | 'vi' | 'th' | 'id' | 'es' | 'ja'
 
-export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['ko', 'en', 'zh-CN', 'vi', 'th', 'id', 'es']
+export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['ko', 'en', 'zh-CN', 'vi', 'th', 'id', 'es', 'ja']
 
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   ko: '한국어',
@@ -10,6 +10,7 @@ export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   th: 'ไทย',
   id: 'Bahasa Indonesia',
   es: 'Español',
+  ja: '日本語',
 }
 
 const LANGUAGE_KEY = 'dm_app_language'
@@ -31,6 +32,7 @@ export function detectBrowserLanguage(): SupportedLanguage {
     if (lang.startsWith('th')) return 'th'
     if (lang.startsWith('id')) return 'id'
     if (lang.startsWith('es')) return 'es'
+    if (lang.startsWith('ja')) return 'ja'
   }
   return 'en'
 }
@@ -88,4 +90,5 @@ export const TTS_LANGUAGE_MAP: Record<SupportedLanguage, string> = {
   th: 'th-TH',
   id: 'id-ID',
   es: 'es-ES',
+  ja: 'ja-JP',
 }
