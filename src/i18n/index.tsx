@@ -140,6 +140,14 @@ const ko = {
     done: '다 배웠어요! 🎉',
     timesTable: '구구단 배우기',
   },
+  timesTablePage: {
+    title: '구구단 배우기',
+    selectDan: '배우고 싶은 단을 선택하세요!',
+    danTitle: '{dan}단 구구단',
+    tapToReveal: '눌러서 확인 →',
+    mastered: '{dan}단 완전 정복! ✨',
+    practiceMul: '곱셈 마법 문제 풀기 →',
+  },
   result: {
     todayResult: '오늘의 결과',
     correctRate: '정답률',
@@ -464,6 +472,14 @@ const en = {
     done: 'All learned! 🎉',
     timesTable: 'Times Tables',
   },
+  timesTablePage: {
+    title: 'Times Tables',
+    selectDan: 'Choose a table to learn!',
+    danTitle: '{dan} Times Table',
+    tapToReveal: 'Tap to reveal →',
+    mastered: '{dan} Table Complete! ✨',
+    practiceMul: 'Practice Multiply Magic →',
+  },
   result: {
     todayResult: "Today's Result",
     correctRate: 'Accuracy',
@@ -678,6 +694,7 @@ const zhCN: TranslationTree = {
   bottomNav: { home: '首页', learn: '学习', rewards: '奖励', history: '记录', aria: '底部菜单' },
   home: { ...en.home, addMagic: '加法魔法', subMagic: '减法魔法', learnMagic: '学习魔法', rewards: '奖励宝箱' },
   concept: { title: '学习魔法', prompt: '想学习哪种魔法？', addBasic: '两位数加法', addCarry: '进位加法', subBasic: '两位数减法', subBorrow: '借位减法', timesTable: '学九九表' },
+  timesTablePage: { title: '学九九表', selectDan: '选择你想学的乘法段！', danTitle: '{dan}的乘法口诀', tapToReveal: '点击查看答案 →', mastered: '{dan}的口诀完成！✨', practiceMul: '去做乘法题 →' },
 }
 
 const vi: TranslationTree = {
@@ -687,6 +704,7 @@ const vi: TranslationTree = {
   bottomNav: { home: 'Trang chủ', learn: 'Học', rewards: 'Thưởng', history: 'Lịch sử', aria: 'Menu dưới' },
   home: { ...en.home, addMagic: 'Phép cộng', subMagic: 'Phép trừ', learnMagic: 'Học phép thuật', rewards: 'Kho thưởng' },
   concept: { title: 'Học phép thuật', prompt: 'Con muốn học phép nào?', addBasic: 'Cộng hai chữ số', addCarry: 'Cộng có nhớ', subBasic: 'Trừ hai chữ số', subBorrow: 'Trừ có mượn', timesTable: 'Học bảng nhân' },
+  timesTablePage: { title: 'Học bảng nhân', selectDan: 'Chọn bảng nhân muốn học!', danTitle: 'Bảng nhân {dan}', tapToReveal: 'Nhấn để xem →', mastered: 'Hoàn thành bảng nhân {dan}! ✨', practiceMul: 'Làm bài nhân →' },
 }
 
 const th: TranslationTree = {
@@ -696,6 +714,7 @@ const th: TranslationTree = {
   bottomNav: { home: 'หน้าแรก', learn: 'เรียนรู้', rewards: 'รางวัล', history: 'ประวัติ', aria: 'เมนูล่าง' },
   home: { ...en.home, addMagic: 'เวทบวก', subMagic: 'เวทลบ', learnMagic: 'เรียนเวทมนตร์', rewards: 'คลังรางวัล' },
   concept: { title: 'เรียนเวทมนตร์', prompt: 'อยากเรียนเวทไหน?', addBasic: 'บวกเลขสองหลัก', addCarry: 'บวกแบบทด', subBasic: 'ลบเลขสองหลัก', subBorrow: 'ลบแบบยืม', timesTable: 'ท่องสูตรคูณ' },
+  timesTablePage: { title: 'ท่องสูตรคูณ', selectDan: 'เลือกสูตรคูณที่อยากเรียน!', danTitle: 'สูตรคูณ {dan}', tapToReveal: 'แตะเพื่อดูคำตอบ →', mastered: 'เก่งมาก! จบสูตรคูณ {dan} แล้ว ✨', practiceMul: 'ฝึกคูณ →' },
 }
 
 const id: TranslationTree = {
@@ -705,6 +724,7 @@ const id: TranslationTree = {
   bottomNav: { home: 'Beranda', learn: 'Belajar', rewards: 'Hadiah', history: 'Riwayat', aria: 'Menu bawah' },
   home: { ...en.home, addMagic: 'Sihir Tambah', subMagic: 'Sihir Kurang', learnMagic: 'Belajar Sihir', rewards: 'Gudang Hadiah' },
   concept: { title: 'Belajar Sihir', prompt: 'Sihir apa yang mau dipelajari?', addBasic: 'Penjumlahan Dua Digit', addCarry: 'Penjumlahan Menyimpan', subBasic: 'Pengurangan Dua Digit', subBorrow: 'Pengurangan Meminjam', timesTable: 'Pelajari Perkalian' },
+  timesTablePage: { title: 'Pelajari Perkalian', selectDan: 'Pilih tabel yang ingin dipelajari!', danTitle: 'Tabel Perkalian {dan}', tapToReveal: 'Ketuk untuk lihat →', mastered: 'Tabel {dan} Selesai! ✨', practiceMul: 'Latihan Perkalian →' },
 }
 
 const es: TranslationTree = {
@@ -714,6 +734,7 @@ const es: TranslationTree = {
   bottomNav: { home: 'Inicio', learn: 'Aprender', rewards: 'Premios', history: 'Historial', aria: 'Menú inferior' },
   home: { ...en.home, addMagic: 'Magia de Suma', subMagic: 'Magia de Resta', learnMagic: 'Aprender Magia', rewards: 'Cofre de Premios' },
   concept: { title: 'Aprender Magia', prompt: '¿Qué magia aprendemos?', addBasic: 'Suma de Dos Dígitos', addCarry: 'Suma con Llevada', subBasic: 'Resta de Dos Dígitos', subBorrow: 'Resta con Préstamo', timesTable: 'Tablas de Multiplicar' },
+  timesTablePage: { title: 'Tablas de Multiplicar', selectDan: '¡Elige la tabla que quieres aprender!', danTitle: 'Tabla del {dan}', tapToReveal: 'Toca para ver →', mastered: '¡Tabla del {dan} completada! ✨', practiceMul: 'Practicar Multiplicación →' },
 }
 
 const ja: TranslationTree = {
@@ -723,6 +744,7 @@ const ja: TranslationTree = {
   bottomNav: { home: 'ホーム', learn: '学ぶ', rewards: 'ご褒美', history: 'きろく', aria: 'ナビメニュー' },
   home: { ...en.home, addMagic: 'たし算の魔法', subMagic: 'ひき算の魔法', learnMagic: '魔法を学ぶ', rewards: '宝箱' },
   concept: { title: '魔法を学ぶ', prompt: 'どの魔法を学ぶ？', addBasic: '2桁のたし算', addCarry: '繰り上がりのたし算', subBasic: '2桁のひき算', subBorrow: '繰り下がりのひき算', timesTable: '九九を学ぶ' },
+  timesTablePage: { title: '九九を学ぶ', selectDan: '学びたい段を選んでね！', danTitle: '{dan}の段の九九', tapToReveal: 'タップして確認 →', mastered: '{dan}の段 マスター！✨', practiceMul: 'かけ算の練習 →' },
 }
 
 const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>> = {

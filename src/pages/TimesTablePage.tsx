@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
 import { getTimesTableMastery } from './TimesTableStudyPage'
+import { useI18n } from '../i18n'
 
 const DANS = [2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -19,6 +20,7 @@ const DAN_COLORS = [
 
 export default function TimesTablePage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [mastery, setMastery] = useState<Set<number>>(new Set())
 
   useEffect(() => {
@@ -35,13 +37,13 @@ export default function TimesTablePage() {
               style={{ width: 42, height: 42, borderRadius: 14, background: 'rgba(255,255,255,0.8)', border: '1.5px solid rgba(255,255,255,0.9)', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', flexShrink: 0 }}>
               ←
             </motion.button>
-            <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#2D2D3A' }}>⭐ 구구단 배우기</div>
+            <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#2D2D3A' }}>⭐ {t('timesTablePage.title')}</div>
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 32px' }}>
           <p style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.88rem', marginBottom: 16, textAlign: 'center' }}>
-            배우고 싶은 단을 선택하세요!
+            {t('timesTablePage.selectDan')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {DANS.map((dan, i) => {
@@ -73,7 +75,7 @@ export default function TimesTablePage() {
                       boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
                     }}>✓</div>
                   )}
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>{dan}단</span>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>{dan}×</span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.85)' }}>
                     {dan}×1 ~ {dan}×9
                   </span>

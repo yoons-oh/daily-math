@@ -54,7 +54,7 @@ function getDanIntroText(dan: number, language: SupportedLanguage): string {
 
 export default function TimesTableStudyPage() {
   const navigate = useNavigate()
-  const { language } = useI18n()
+  const { language, t } = useI18n()
   const { dan: danParam } = useParams<{ dan: string }>()
   const dan = Number(danParam) || 2
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
@@ -68,14 +68,12 @@ export default function TimesTableStudyPage() {
 
   const allRevealed = revealed.size === 9
 
-  // 페이지 로드 시 인트로 TTS
   useEffect(() => {
     const intro = getDanIntroText(dan, language as SupportedLanguage)
     say(intro, false, language as SupportedLanguage).catch(() => {})
     return () => stopAll()
   }, [dan, language])
 
-  // 단 완전 학습 시 localStorage 저장
   useEffect(() => {
     if (allRevealed) saveMastery(dan)
   }, [allRevealed, dan])
@@ -106,7 +104,6 @@ export default function TimesTableStudyPage() {
 
   async function handleCardTap(factor: number, product: number) {
     if (revealed.has(factor)) {
-      // 이미 공개된 카드 → 다시 읽기
       lastSpokenRef.current = factor
       setSpeakingFactor(factor)
       const text = getMulFactText(dan, factor, product, language as SupportedLanguage)
@@ -130,10 +127,9 @@ export default function TimesTableStudyPage() {
                 ←
               </motion.button>
               <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#2D2D3A' }}>
-                ⭐ {dan}단 구구단
+                ⭐ {t('timesTablePage.danTitle', { dan })}
               </div>
             </div>
-            {/* 다시 읽기 버튼 */}
             <motion.button
               whileTap={{ scale: 0.88 }}
               onClick={replayLast}
@@ -220,7 +216,7 @@ export default function TimesTableStudyPage() {
                         exit={{ opacity: 0 }}
                         style={{ fontWeight: 900, fontSize: '1.1rem', color: '#B0B0C8' }}
                       >
-                        눌러서 확인 →
+                        {t('timesTablePage.tapToReveal')}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -248,7 +244,7 @@ export default function TimesTableStudyPage() {
                   style={{ fontSize: '2.4rem', marginBottom: 6 }}
                 >🎉</motion.div>
                 <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#5B21B6' }}>
-                  {dan}단 완전 정복! ✨
+                  {t('timesTablePage.mastered', { dan })}
                 </div>
               </motion.div>
             )}
@@ -268,7 +264,7 @@ export default function TimesTableStudyPage() {
               boxShadow: '0 6px 0 #5B21B6, 0 10px 24px rgba(167,139,250,0.38)',
             }}
           >
-            ⭐ 곱셈 마법 문제 풀기 →
+            ⭐ {t('timesTablePage.practiceMul')}
           </motion.button>
         </div>
       </div>
