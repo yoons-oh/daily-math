@@ -19,6 +19,7 @@ import { playSound, unlockSound } from '../lib/sound'
 import { useI18n, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '../i18n'
 import { consumeAuthSelectedLanguage, SupportedLanguage } from '../lib/language'
 import { updateChildProfileLanguage, updateChildProfileLevel } from '../lib/childProfiles'
+import { useSubscription } from '../lib/subscription'
 
 const CHAR_IMG: Record<string, string> = {
   rabbit: '/characters/rabbit.jpg',
@@ -107,6 +108,7 @@ export default function Home() {
   const [rewardState, setRewardState] = useState<UserRewardState | null>(null)
   const [todayDone, setTodayDone] = useState(false)
   const [todayStats, setTodayStats] = useState({ correct: 0, total: 0 })
+  const { subscription } = useSubscription()
 
   useEffect(() => {
     const p = getCurrentProfile()
@@ -162,8 +164,9 @@ export default function Home() {
     item.route === '/rewards' ? { ...item, sub: `별 ${starCount}개` } : item,
   )
   const getMenuCopy = (route: string) => {
-    if (route === '/practice/add') return { title: t('home.addMagic'), sub: t('home.today20') }
-    if (route === '/practice/sub') return { title: t('home.subMagic'), sub: t('home.today20') }
+    const dailySub = t('home.todayN', { count: subscription.dailyLimit })
+    if (route === '/practice/add') return { title: t('home.addMagic'), sub: dailySub }
+    if (route === '/practice/sub') return { title: t('home.subMagic'), sub: dailySub }
     if (route === '/concept') return { title: t('home.learnMagic'), sub: t('home.conceptAnimation') }
     if (route === '/rewards') return { title: t('home.rewards'), sub: t('home.starsCount', { count: starCount }) }
     return { title: '', sub: '' }
