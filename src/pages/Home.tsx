@@ -333,7 +333,7 @@ export default function Home() {
                 border: 'none',
                 flex: 1,
                 minWidth: 0,
-                maxWidth: 200,
+                maxWidth: 240,
                 fontSize: '0.78rem',
                 fontWeight: 900,
                 padding: '0 10px',
@@ -371,9 +371,10 @@ export default function Home() {
                 color: '#5E6178',
                 fontSize: '0.72rem',
                 fontWeight: 900,
-                padding: '0 10px',
+                padding: '0 6px',
                 outline: 'none',
                 flexShrink: 0,
+                width: 82,
                 boxShadow: '0 4px 12px rgba(76, 106, 170, 0.12)',
               }}
             >
