@@ -195,8 +195,12 @@ export default function Home() {
         ...base,
         left: '50%',
         right: '4%',
-        top: '50%',
-        transform: 'translateY(-50%)',
+        top: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         textAlign: 'center',
       }
     }
