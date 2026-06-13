@@ -273,9 +273,18 @@ export default function PracticePage() {
     return (
       <div className="app-container items-center justify-center">
         <MagicBackground />
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          style={{ fontSize: '3rem' }}>✨</motion.div>
-        <p style={{ color: '#7A7A9A', marginTop: 12, fontWeight: 700 }}>{t('practice.loading')}</p>
+        {!isBlocked && (
+          <>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              style={{ fontSize: '3rem' }}>✨</motion.div>
+            <p style={{ color: '#7A7A9A', marginTop: 12, fontWeight: 700 }}>{t('practice.loading')}</p>
+          </>
+        )}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onClose={() => { setShowUpgradeModal(false); navigate(-1) }}
+          isBlocked={isBlocked}
+        />
       </div>
     )
   }
