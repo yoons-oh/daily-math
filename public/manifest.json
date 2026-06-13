@@ -1,4 +1,5 @@
 {
+  "id": "com.dailymath.app",
   "name": "매일수학",
   "short_name": "매일수학",
   "description": "매일 수학 마법으로 기초 연산을 연습해요",
@@ -25,8 +26,15 @@
   "screenshots": [
     {
       "src": "/home/menu-add.jpg",
-      "sizes": "800x600",
-      "type": "image/jpeg"
+      "sizes": "279x140",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "com.dailymath.app"
     }
   ],
   "categories": ["education", "kids"],
