@@ -346,6 +346,15 @@ export default function Home() {
             {streak && streak.currentStreak > 0 && (
               <div className="streak-badge">🔥 {t('home.streakShort', { count: streak.currentStreak })}</div>
             )}
+            {subscription.isPro && (
+              <div style={{
+                height: 32, borderRadius: 999, padding: '0 12px',
+                background: 'linear-gradient(135deg,#62D6B2,#3EC99A)',
+                color: '#fff', fontWeight: 900, fontSize: '0.78rem',
+                display: 'flex', alignItems: 'center', gap: 4,
+                boxShadow: '0 3px 8px rgba(98,214,178,0.4)',
+              }}>✨ PRO</div>
+            )}
             <select
               value={language}
               onChange={event => changeLanguage(event.target.value as SupportedLanguage)}

@@ -6,6 +6,7 @@ import { getStreak, getCurrentProfile, getUserRewardState } from '../lib/storage
 import { DailyMathRewardSummary, getRewardGrade, RewardGrade } from '../lib/rewards'
 import MagicBackground from '../components/MagicBackground'
 import { useI18n } from '../i18n'
+import { useSubscription } from '../lib/subscription'
 
 interface ResultState {
   results: QuestionResult[]
@@ -17,6 +18,7 @@ interface ResultState {
 export default function ResultPage() {
   const navigate = useNavigate()
   const { t } = useI18n()
+  const { subscription } = useSubscription()
   const { state } = useLocation() as { state: ResultState }
   const profile = getCurrentProfile()
 
@@ -246,6 +248,42 @@ export default function ResultPage() {
             ))}
           </div>
         </motion.div>
+
+        {!subscription.isPro && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            style={{
+              borderRadius: 22, marginBottom: 16,
+              background: 'linear-gradient(135deg,rgba(98,214,178,0.15),rgba(168,216,255,0.12))',
+              border: '1.5px solid rgba(98,214,178,0.35)',
+              padding: '16px 18px',
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}
+          >
+            <span style={{ fontSize: '2.2rem', flexShrink: 0 }}>⭐</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '0.95rem', marginBottom: 3 }}>
+                하루 20문제로 업그레이드!
+              </div>
+              <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.78rem' }}>
+                지금은 하루 {subscription.dailyLimit}문제 · Pro는 20문제 ₩2,000/월
+              </div>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/subscribe')}
+              style={{
+                height: 40, padding: '0 16px', borderRadius: 14, border: 'none',
+                background: 'linear-gradient(135deg,#62D6B2,#3EC99A)',
+                color: '#fff', fontWeight: 900, fontSize: '0.82rem', cursor: 'pointer',
+                boxShadow: '0 4px 0 #28A87A',
+                flexShrink: 0,
+              }}
+            >
+              업그레이드 →
+            </motion.button>
+          </motion.div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {wrongItems.length > 0 && (

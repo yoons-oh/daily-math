@@ -6,6 +6,7 @@ import MagicBackground from '../components/MagicBackground'
 import { getCurrentProfile, getSessions } from '../lib/storage'
 import { PracticeSession } from '../lib/types'
 import { useI18n } from '../i18n'
+import { useSubscription } from '../lib/subscription'
 
 function getRate(session: PracticeSession) {
   if (!session.questions.length) return 0
@@ -20,6 +21,7 @@ function getOperationLabel(session: PracticeSession, t: (key: string) => string)
 export default function HistoryPage() {
   const navigate = useNavigate()
   const { language, t } = useI18n()
+  const { subscription } = useSubscription()
   const [sessions, setSessions] = useState<PracticeSession[]>([])
 
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function HistoryPage() {
               <div style={{ fontSize: '3rem', marginBottom: 8 }}>🌱</div>
               <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.1rem' }}>{t('history.emptyTitle')}</div>
               <p style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.86rem', marginTop: 6 }}>
-                {t('history.emptyDesc')}
+                {t('history.emptyDesc', { count: subscription.dailyLimit })}
               </p>
             </motion.div>
           ) : (

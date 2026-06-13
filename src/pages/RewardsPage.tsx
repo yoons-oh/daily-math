@@ -6,10 +6,12 @@ import { Reward, StreakInfo } from '../lib/types'
 import BottomNav from '../components/BottomNav'
 import MagicBackground from '../components/MagicBackground'
 import { useI18n } from '../i18n'
+import { useSubscription } from '../lib/subscription'
 
 export default function RewardsPage() {
   const navigate = useNavigate()
   const { language, t } = useI18n()
+  const { subscription } = useSubscription()
   const [rewards, setRewards] = useState<Reward[]>([])
   const [streak, setStreak] = useState<StreakInfo | null>(null)
 
@@ -156,7 +158,7 @@ export default function RewardsPage() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { emoji: '⭐', label: t('rewards.goalToday'), done: false },
+                { emoji: '⭐', label: t('rewards.goalToday', { count: subscription.dailyLimit }), done: false },
                 { emoji: '🌟', label: t('rewards.goal3Days', { count: streak?.currentStreak ?? 0 }), done: (streak?.currentStreak ?? 0) >= 3 },
                 { emoji: '🏅', label: t('rewards.goal7Days', { count: streak?.currentStreak ?? 0 }), done: (streak?.currentStreak ?? 0) >= 7 },
               ].map((g, i) => (

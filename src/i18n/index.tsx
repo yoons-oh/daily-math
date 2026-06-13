@@ -34,7 +34,7 @@ const ko = {
     profile: '프로필',
   },
   auth: {
-    tagline: '매일 20문제로 기초 연산을 연습해요.',
+    tagline: '매일 수학 마법으로 기초 연산을 연습해요.',
     login: '로그인',
     signup: '회원가입',
     resetTitle: '비밀번호 찾기',
@@ -227,7 +227,7 @@ const ko = {
     average: '평균',
     problemCount: '{count}개',
     emptyTitle: '아직 기록이 없어요',
-    emptyDesc: '오늘 20문제를 완료하면 여기에 기록돼요.',
+    emptyDesc: '오늘 {count}문제를 완료하면 여기에 기록돼요.',
     correctCount: '{correct}/{total}문제 성공',
   },
   rewards: {
@@ -241,7 +241,7 @@ const ko = {
     bestStreak: '최고 기록: {count}일',
     itemCount: '{count}개',
     nextGoal: '다음 목표',
-    goalToday: '오늘도 20문제 완료!',
+    goalToday: '오늘도 {count}문제 완료!',
     goal3Days: '3일 연속 학습 (현재 {count}일)',
     goal7Days: '7일 연속 학습 (현재 {count}일)',
     popupTitle: '보상 획득!',
@@ -323,7 +323,7 @@ const en = {
     profile: 'Profile',
   },
   auth: {
-    tagline: 'Practice basic math with 20 questions every day.',
+    tagline: 'Practice basic arithmetic every day!',
     login: 'Log in',
     signup: 'Sign up',
     resetTitle: 'Reset password',
@@ -510,7 +510,7 @@ const en = {
     average: 'Average',
     problemCount: '{count}',
     emptyTitle: 'No history yet',
-    emptyDesc: 'Complete 20 questions today and your record will appear here.',
+    emptyDesc: 'Complete {count} questions today and your record will appear here.',
     correctCount: '{correct}/{total} correct',
   },
   rewards: {
@@ -524,7 +524,7 @@ const en = {
     bestStreak: 'Best record: {count} days',
     itemCount: '{count}',
     nextGoal: 'Next Goal',
-    goalToday: 'Complete 20 questions today!',
+    goalToday: 'Complete {count} questions today!',
     goal3Days: '3-day learning streak (now {count} days)',
     goal7Days: '7-day learning streak (now {count} days)',
     popupTitle: 'Reward earned!',
@@ -592,7 +592,7 @@ const en = {
 const zhCN: TranslationTree = {
   ...en,
   common: { ...en.common, loading: '加载中...', language: '语言', selectLanguage: '选择语言', next: '下一步', previous: '上一步' },
-  auth: { ...en.auth, tagline: '每天用20道题练习基础运算。', login: '登录', signup: '注册' },
+  auth: { ...en.auth, tagline: '每天练习基础运算。', login: '登录', signup: '注册' },
   bottomNav: { home: '首页', learn: '学习', rewards: '奖励', history: '记录', aria: '底部菜单' },
   home: { ...en.home, addMagic: '加法魔法', subMagic: '减法魔法', learnMagic: '学习魔法', rewards: '奖励宝箱' },
   concept: { title: '学习魔法', prompt: '想学习哪种魔法？', addBasic: '两位数加法', addCarry: '进位加法', subBasic: '两位数减法', subBorrow: '借位减法' },
@@ -601,7 +601,7 @@ const zhCN: TranslationTree = {
 const vi: TranslationTree = {
   ...en,
   common: { ...en.common, loading: 'Đang tải...', language: 'Ngôn ngữ', selectLanguage: 'Chọn ngôn ngữ', next: 'Tiếp', previous: 'Trước' },
-  auth: { ...en.auth, tagline: 'Luyện toán cơ bản mỗi ngày với 20 câu hỏi.', login: 'Đăng nhập', signup: 'Đăng ký' },
+  auth: { ...en.auth, tagline: 'Luyện toán cơ bản mỗi ngày.', login: 'Đăng nhập', signup: 'Đăng ký' },
   bottomNav: { home: 'Trang chủ', learn: 'Học', rewards: 'Thưởng', history: 'Lịch sử', aria: 'Menu dưới' },
   home: { ...en.home, addMagic: 'Phép cộng', subMagic: 'Phép trừ', learnMagic: 'Học phép thuật', rewards: 'Kho thưởng' },
   concept: { title: 'Học phép thuật', prompt: 'Con muốn học phép nào?', addBasic: 'Cộng hai chữ số', addCarry: 'Cộng có nhớ', subBasic: 'Trừ hai chữ số', subBorrow: 'Trừ có mượn' },
@@ -610,7 +610,7 @@ const vi: TranslationTree = {
 const th: TranslationTree = {
   ...en,
   common: { ...en.common, loading: 'กำลังโหลด...', language: 'ภาษา', selectLanguage: 'เลือกภาษา', next: 'ถัดไป', previous: 'ก่อนหน้า' },
-  auth: { ...en.auth, tagline: 'ฝึกคณิตพื้นฐานวันละ 20 ข้อ', login: 'เข้าสู่ระบบ', signup: 'สมัครสมาชิก' },
+  auth: { ...en.auth, tagline: 'ฝึกคณิตพื้นฐานทุกวัน', login: 'เข้าสู่ระบบ', signup: 'สมัครสมาชิก' },
   bottomNav: { home: 'หน้าแรก', learn: 'เรียนรู้', rewards: 'รางวัล', history: 'ประวัติ', aria: 'เมนูล่าง' },
   home: { ...en.home, addMagic: 'เวทบวก', subMagic: 'เวทลบ', learnMagic: 'เรียนเวทมนตร์', rewards: 'คลังรางวัล' },
   concept: { title: 'เรียนเวทมนตร์', prompt: 'อยากเรียนเวทไหน?', addBasic: 'บวกเลขสองหลัก', addCarry: 'บวกแบบทด', subBasic: 'ลบเลขสองหลัก', subBorrow: 'ลบแบบยืม' },
@@ -619,7 +619,7 @@ const th: TranslationTree = {
 const id: TranslationTree = {
   ...en,
   common: { ...en.common, loading: 'Memuat...', language: 'Bahasa', selectLanguage: 'Pilih bahasa', next: 'Lanjut', previous: 'Sebelumnya' },
-  auth: { ...en.auth, tagline: 'Latih matematika dasar dengan 20 soal setiap hari.', login: 'Masuk', signup: 'Daftar' },
+  auth: { ...en.auth, tagline: 'Latih matematika dasar setiap hari.', login: 'Masuk', signup: 'Daftar' },
   bottomNav: { home: 'Beranda', learn: 'Belajar', rewards: 'Hadiah', history: 'Riwayat', aria: 'Menu bawah' },
   home: { ...en.home, addMagic: 'Sihir Tambah', subMagic: 'Sihir Kurang', learnMagic: 'Belajar Sihir', rewards: 'Gudang Hadiah' },
   concept: { title: 'Belajar Sihir', prompt: 'Sihir apa yang mau dipelajari?', addBasic: 'Penjumlahan Dua Digit', addCarry: 'Penjumlahan Menyimpan', subBasic: 'Pengurangan Dua Digit', subBorrow: 'Pengurangan Meminjam' },
@@ -628,7 +628,7 @@ const id: TranslationTree = {
 const es: TranslationTree = {
   ...en,
   common: { ...en.common, loading: 'Cargando...', language: 'Idioma', selectLanguage: 'Elegir idioma', next: 'Siguiente', previous: 'Anterior' },
-  auth: { ...en.auth, tagline: 'Practica matemáticas básicas con 20 preguntas cada día.', login: 'Iniciar sesión', signup: 'Registrarse' },
+  auth: { ...en.auth, tagline: 'Practica matemáticas básicas cada día.', login: 'Iniciar sesión', signup: 'Registrarse' },
   bottomNav: { home: 'Inicio', learn: 'Aprender', rewards: 'Premios', history: 'Historial', aria: 'Menú inferior' },
   home: { ...en.home, addMagic: 'Magia de Suma', subMagic: 'Magia de Resta', learnMagic: 'Aprender Magia', rewards: 'Cofre de Premios' },
   concept: { title: 'Aprender Magia', prompt: '¿Qué magia aprendemos?', addBasic: 'Suma de Dos Dígitos', addCarry: 'Suma con Llevada', subBasic: 'Resta de Dos Dígitos', subBorrow: 'Resta con Préstamo' },
@@ -669,7 +669,7 @@ const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>
       stickers: '贴纸',
       special: '特别奖励',
       nextGoal: '下一个目标',
-      goalToday: '今天完成20道题！',
+      goalToday: '今天完成{count}道题！',
     },
     review: {
       title: '错题复习',
@@ -718,7 +718,7 @@ const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>
       handwritingWarning: 'Nhận dạng có thể chưa chính xác. Nên dùng bàn phím số.',
       useKeypad: 'Dùng bàn phím số',
     },
-    rewards: { stickers: 'Nhãn dán', special: 'Thưởng đặc biệt', nextGoal: 'Mục tiêu tiếp theo', goalToday: 'Hoàn thành 20 câu hôm nay!' },
+    rewards: { stickers: 'Nhãn dán', special: 'Thưởng đặc biệt', nextGoal: 'Mục tiêu tiếp theo', goalToday: 'Hoàn thành {count} câu hôm nay!' },
     review: { title: 'Ôn câu sai', doneTitle: 'Ôn xong rồi!', doneDesc: 'Con đã làm lại tất cả câu sai!' },
     solution: {
       title: 'Cùng xem cách giải',
@@ -762,7 +762,7 @@ const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>
       handwritingWarning: 'การจดจำอาจไม่แม่นยำ แนะนำให้ใช้แป้นตัวเลข',
       useKeypad: 'ใช้แป้นตัวเลข',
     },
-    rewards: { stickers: 'สติกเกอร์', special: 'รางวัลพิเศษ', nextGoal: 'เป้าหมายต่อไป', goalToday: 'ทำ 20 ข้อวันนี้ให้เสร็จ!' },
+    rewards: { stickers: 'สติกเกอร์', special: 'รางวัลพิเศษ', nextGoal: 'เป้าหมายต่อไป', goalToday: 'ทำ {count} ข้อวันนี้ให้เสร็จ!' },
     review: { title: 'ทบทวนข้อที่พลาด', doneTitle: 'ทบทวนเสร็จแล้ว!', doneDesc: 'ทำข้อที่พลาดครบแล้ว!' },
     solution: {
       title: 'มาดูวิธีทำกัน',
@@ -785,7 +785,7 @@ const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>
       gradeC: 'Menyelesaikan semuanya juga hebat!',
     },
     practice: { clear: 'Hapus', submitAnswer: '✅ Periksa', handwritingWarning: 'Pengenalan bisa kurang akurat. Sebaiknya gunakan papan angka.' },
-    rewards: { nextGoal: 'Target Berikutnya', goalToday: 'Selesaikan 20 soal hari ini!' },
+    rewards: { nextGoal: 'Target Berikutnya', goalToday: 'Selesaikan {count} soal hari ini!' },
     review: { title: 'Ulangi Soal yang Salah', doneTitle: 'Ulangan selesai!', doneDesc: 'Semua soal yang salah sudah dikerjakan lagi!' },
     solution: {
       title: 'Mari periksa penyelesaiannya',
@@ -808,7 +808,7 @@ const dictionaryEnhancements: Partial<Record<SupportedLanguage, TranslationTree>
       gradeC: '¡Terminar hasta el final también es genial!',
     },
     practice: { clear: 'Borrar', submitAnswer: '✅ Revisar', handwritingWarning: 'El reconocimiento puede fallar. Recomendamos usar el teclado numérico.' },
-    rewards: { nextGoal: 'Siguiente meta', goalToday: '¡Completa 20 preguntas hoy!' },
+    rewards: { nextGoal: 'Siguiente meta', goalToday: '¡Completa {count} preguntas hoy!' },
     review: { title: 'Repasar errores', doneTitle: '¡Repaso completo!', doneDesc: '¡Volviste a resolver todos los errores!' },
     solution: {
       title: 'Veamos la solución',
@@ -841,7 +841,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       profile: '角色',
     },
     auth: {
-      tagline: '每天练习20道基础数学题。',
+      tagline: '每天练习基础数学。',
       login: '登录',
       signup: '注册',
       resetTitle: '重设密码',
@@ -983,7 +983,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       average: '平均',
       problemCount: '{count}题',
       emptyTitle: '还没有记录',
-      emptyDesc: '完成今天20题后，记录会显示在这里。',
+      emptyDesc: '完成今天{count}题后，记录会显示在这里。',
       correctCount: '答对 {correct}/{total} 题',
     },
     rewards: {
@@ -997,7 +997,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       bestStreak: '最高记录：{count}天',
       itemCount: '{count}个',
       nextGoal: '下一个目标',
-      goalToday: '今天完成20题！',
+      goalToday: '今天完成{count}题！',
       goal3Days: '连续学习3天（现在{count}天）',
       goal7Days: '连续学习7天（现在{count}天）',
       popupTitle: '获得奖励！',
@@ -1028,7 +1028,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       profile: 'Hồ sơ',
     },
     auth: {
-      tagline: 'Luyện toán cơ bản mỗi ngày với 20 câu hỏi.',
+      tagline: 'Luyện toán cơ bản mỗi ngày.',
       login: 'Đăng nhập',
       signup: 'Đăng ký',
       resetTitle: 'Đặt lại mật khẩu',
@@ -1170,7 +1170,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       average: 'Trung bình',
       problemCount: '{count} câu',
       emptyTitle: 'Chưa có lịch sử',
-      emptyDesc: 'Hoàn thành 20 câu hôm nay thì lịch sử sẽ hiện ở đây.',
+      emptyDesc: 'Hoàn thành {count} câu hôm nay thì lịch sử sẽ hiện ở đây.',
       correctCount: 'Đúng {correct}/{total} câu',
     },
     rewards: {
@@ -1184,7 +1184,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       bestStreak: 'Kỷ lục: {count} ngày',
       itemCount: '{count}',
       nextGoal: 'Mục tiêu tiếp theo',
-      goalToday: 'Hoàn thành 20 câu hôm nay!',
+      goalToday: 'Hoàn thành {count} câu hôm nay!',
       goal3Days: 'Chuỗi học 3 ngày (hiện {count} ngày)',
       goal7Days: 'Chuỗi học 7 ngày (hiện {count} ngày)',
       popupTitle: 'Nhận thưởng!',
@@ -1215,7 +1215,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       profile: 'โปรไฟล์',
     },
     auth: {
-      tagline: 'ฝึกคณิตพื้นฐานวันละ 20 ข้อ',
+      tagline: 'ฝึกคณิตพื้นฐานทุกวัน',
       login: 'เข้าสู่ระบบ',
       signup: 'สมัครสมาชิก',
       resetTitle: 'รีเซ็ตรหัสผ่าน',
@@ -1357,7 +1357,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       average: 'เฉลี่ย',
       problemCount: '{count} ข้อ',
       emptyTitle: 'ยังไม่มีประวัติ',
-      emptyDesc: 'เมื่อทำ 20 ข้อวันนี้เสร็จ ประวัติจะแสดงที่นี่',
+      emptyDesc: 'เมื่อทำ {count} ข้อวันนี้เสร็จ ประวัติจะแสดงที่นี่',
       correctCount: 'ถูก {correct}/{total} ข้อ',
     },
     rewards: {
@@ -1371,7 +1371,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       bestStreak: 'สถิติสูงสุด: {count} วัน',
       itemCount: '{count}',
       nextGoal: 'เป้าหมายถัดไป',
-      goalToday: 'ทำ 20 ข้อวันนี้ให้เสร็จ!',
+      goalToday: 'ทำ {count} ข้อวันนี้ให้เสร็จ!',
       goal3Days: 'เรียนต่อเนื่อง 3 วัน (ตอนนี้ {count} วัน)',
       goal7Days: 'เรียนต่อเนื่อง 7 วัน (ตอนนี้ {count} วัน)',
       popupTitle: 'ได้รับรางวัล!',
@@ -1402,7 +1402,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       profile: 'Profil',
     },
     auth: {
-      tagline: 'Latihan matematika dasar dengan 20 soal setiap hari.',
+      tagline: 'Latihan matematika dasar setiap hari.',
       login: 'Masuk',
       signup: 'Daftar',
       resetTitle: 'Atur ulang kata sandi',
@@ -1544,7 +1544,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       average: 'Rata-rata',
       problemCount: '{count} soal',
       emptyTitle: 'Belum ada riwayat',
-      emptyDesc: 'Selesaikan 20 soal hari ini, lalu riwayat muncul di sini.',
+      emptyDesc: 'Selesaikan {count} soal hari ini, lalu riwayat muncul di sini.',
       correctCount: 'Benar {correct}/{total} soal',
     },
     rewards: {
@@ -1558,7 +1558,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       bestStreak: 'Rekor terbaik: {count} hari',
       itemCount: '{count}',
       nextGoal: 'Target Berikutnya',
-      goalToday: 'Selesaikan 20 soal hari ini!',
+      goalToday: 'Selesaikan {count} soal hari ini!',
       goal3Days: 'Runtun belajar 3 hari (sekarang {count} hari)',
       goal7Days: 'Runtun belajar 7 hari (sekarang {count} hari)',
       popupTitle: 'Hadiah didapat!',
@@ -1589,7 +1589,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       profile: 'Perfil',
     },
     auth: {
-      tagline: 'Practica matemáticas básicas con 20 preguntas cada día.',
+      tagline: 'Practica matemáticas básicas cada día.',
       login: 'Iniciar sesión',
       signup: 'Registrarse',
       resetTitle: 'Restablecer contraseña',
@@ -1731,7 +1731,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       average: 'Promedio',
       problemCount: '{count} preguntas',
       emptyTitle: 'Aún no hay historial',
-      emptyDesc: 'Completa 20 preguntas hoy y el historial aparecerá aquí.',
+      emptyDesc: 'Completa {count} preguntas hoy y el historial aparecerá aquí.',
       correctCount: '{correct}/{total} correctas',
     },
     rewards: {
@@ -1745,7 +1745,7 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       bestStreak: 'Mejor récord: {count} días',
       itemCount: '{count}',
       nextGoal: 'Siguiente meta',
-      goalToday: '¡Completa 20 preguntas hoy!',
+      goalToday: '¡Completa {count} preguntas hoy!',
       goal3Days: 'Racha de 3 días (ahora {count} días)',
       goal7Days: 'Racha de 7 días (ahora {count} días)',
       popupTitle: '¡Premio obtenido!',

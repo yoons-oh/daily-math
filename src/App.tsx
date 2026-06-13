@@ -10,6 +10,8 @@ import ReviewPage     from './pages/ReviewPage'
 import ConceptPage    from './pages/ConceptPage'
 import RewardsPage    from './pages/RewardsPage'
 import HistoryPage    from './pages/HistoryPage'
+import SubscribePage  from './pages/SubscribePage'
+import SubscribeSuccessPage from './pages/SubscribeSuccessPage'
 import { getCurrentProfileId, replaceProfiles, saveProfile } from './lib/storage'
 import { onAuthStateChange } from './lib/auth'
 import { fetchChildProfiles, updateChildProfileLanguage } from './lib/childProfiles'
@@ -84,6 +86,8 @@ export default function App() {
         <Route path="/concept"     element={user ? <ConceptPage /> : <Navigate to="/auth" replace />} />
         <Route path="/rewards"     element={user ? <RewardsPage /> : <Navigate to="/auth" replace />} />
         <Route path="/history"     element={user ? <HistoryPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/subscribe"         element={user ? <SubscribePage /> : <Navigate to="/auth" replace />} />
+        <Route path="/subscribe/success" element={user ? <SubscribeSuccessPage /> : <Navigate to="/auth" replace />} />
         <Route path="*"            element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
