@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from '../i18n'
 
 interface UpgradeModalProps {
   open: boolean
@@ -11,6 +12,7 @@ interface UpgradeModalProps {
 
 export default function UpgradeModal({ open, onClose, isBlocked = false }: UpgradeModalProps) {
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   return (
     <AnimatePresence>
@@ -41,7 +43,6 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
               textAlign: 'center',
             }}
           >
-            {/* 별 장식 */}
             <motion.div
               animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
               transition={{ duration: 2.4, repeat: Infinity }}
@@ -51,7 +52,9 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
             </motion.div>
 
             <div style={{ fontWeight: 900, fontSize: '1.25rem', color: '#2D2D3A', marginBottom: 8 }}>
-              {isBlocked ? '오늘 마법을 다 썼어요!' : '2문제 완성!'}
+              {isBlocked
+                ? t('upgrade.blockedTitle')
+                : t('upgrade.limitTitle', { count: 2 })}
             </div>
 
             <div style={{
@@ -60,12 +63,11 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
               borderRadius: 18, padding: '14px 16px', marginBottom: 20,
             }}>
               <p style={{ color: '#4A4A6A', fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
-                무료 플랜은 <strong style={{ color: '#3EC99A' }}>하루 2문제</strong>까지 풀 수 있어요.{'\n'}
-                Pro로 업그레이드하면 <strong style={{ color: '#3EC99A' }}>하루 20문제</strong>를 풀 수 있어요! 🚀
+                {t('upgrade.descFree', { free: 2 })}{' '}
+                {t('upgrade.descPro', { pro: 20 })}
               </p>
             </div>
 
-            {/* 플랜 비교 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
               <div style={{
                 borderRadius: 16, padding: '12px 10px',
@@ -73,8 +75,8 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
                 border: '1.5px solid rgba(180,180,210,0.3)',
               }}>
                 <div style={{ fontWeight: 900, color: '#8B8DA4', fontSize: '0.78rem', marginBottom: 4 }}>FREE</div>
-                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>2문제</div>
-                <div style={{ color: '#8B8DA4', fontSize: '0.72rem', fontWeight: 800 }}>/ 하루</div>
+                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>2</div>
+                <div style={{ color: '#8B8DA4', fontSize: '0.72rem', fontWeight: 800 }}>{t('upgrade.perDay')}</div>
               </div>
               <div style={{
                 borderRadius: 16, padding: '12px 10px',
@@ -82,8 +84,8 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
                 border: '2px solid rgba(98,214,178,0.5)',
               }}>
                 <div style={{ fontWeight: 900, color: '#3EC99A', fontSize: '0.78rem', marginBottom: 4 }}>PRO ✨</div>
-                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>20문제</div>
-                <div style={{ color: '#3EC99A', fontSize: '0.72rem', fontWeight: 800 }}>₩2,000 / 월</div>
+                <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '1.3rem' }}>20</div>
+                <div style={{ color: '#3EC99A', fontSize: '0.72rem', fontWeight: 800 }}>{t('upgrade.proPrice')}</div>
               </div>
             </div>
 
@@ -98,7 +100,7 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
                 marginBottom: 10,
               }}
             >
-              Pro로 업그레이드 →
+              {t('upgrade.cta')}
             </motion.button>
 
             <button
@@ -109,7 +111,7 @@ export default function UpgradeModal({ open, onClose, isBlocked = false }: Upgra
                 fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer',
               }}
             >
-              내일 다시 할게요
+              {t('upgrade.dismiss')}
             </button>
           </motion.div>
         </motion.div>

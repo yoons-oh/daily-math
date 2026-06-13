@@ -98,10 +98,10 @@ export default function ResultPage() {
             <span style={{ fontSize: '2.2rem', flexShrink: 0 }}>⭐</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 900, color: '#2D2D3A', fontSize: '0.95rem', marginBottom: 3 }}>
-                하루 20문제로 업그레이드!
+                {t('upgrade.resultTitle', { pro: 20 })}
               </div>
               <div style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.78rem' }}>
-                지금은 하루 {subscription.dailyLimit}문제 · Pro는 20문제 ₩2,000/월
+                {t('upgrade.resultSub', { limit: subscription.dailyLimit, price: '₩2,000' })}
               </div>
             </div>
             <motion.button
@@ -115,7 +115,7 @@ export default function ResultPage() {
                 flexShrink: 0,
               }}
             >
-              업그레이드 →
+              {t('upgrade.ctaShort')}
             </motion.button>
           </motion.div>
         )}
