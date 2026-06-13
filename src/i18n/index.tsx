@@ -119,6 +119,8 @@ const ko = {
     weekThu: '목',
     weekFri: '금',
     weekSat: '토',
+    mulMagic: '곱셈 마법',
+    divMagic: '나누기 마법',
   },
   bottomNav: {
     home: '홈',
@@ -446,6 +448,8 @@ const en = {
     weekThu: 'Thu',
     weekFri: 'Fri',
     weekSat: 'Sat',
+    mulMagic: 'Multiply Magic',
+    divMagic: 'Divide Magic',
   },
   bottomNav: { home: 'Home', learn: 'Learn', rewards: 'Rewards', history: 'History', aria: 'Bottom menu' },
   concept: {
@@ -999,6 +1003,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: '四',
       weekFri: '五',
       weekSat: '六',
+      mulMagic: '乘法魔法',
+      divMagic: '除法魔法',
     },
     bottomNav: { home: '首页', learn: '学习', rewards: '奖励', history: '记录', aria: '底部菜单' },
     concept: {
@@ -1224,6 +1230,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: 'T5',
       weekFri: 'T6',
       weekSat: 'T7',
+      mulMagic: 'Phép nhân',
+      divMagic: 'Phép chia',
     },
     bottomNav: { home: 'Nhà', learn: 'Học', rewards: 'Thưởng', history: 'Lịch sử', aria: 'Menu dưới' },
     concept: {
@@ -1449,6 +1457,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: 'พฤ',
       weekFri: 'ศ',
       weekSat: 'ส',
+      mulMagic: 'เวทคูณ',
+      divMagic: 'เวทหาร',
     },
     bottomNav: { home: 'หน้าแรก', learn: 'เรียน', rewards: 'รางวัล', history: 'ประวัติ', aria: 'เมนูล่าง' },
     concept: {
@@ -1674,6 +1684,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: 'Kam',
       weekFri: 'Jum',
       weekSat: 'Sab',
+      mulMagic: 'Sihir Kali',
+      divMagic: 'Sihir Bagi',
     },
     bottomNav: { home: 'Home', learn: 'Belajar', rewards: 'Hadiah', history: 'Riwayat', aria: 'Menu bawah' },
     concept: {
@@ -1899,6 +1911,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: 'Jue',
       weekFri: 'Vie',
       weekSat: 'Sáb',
+      mulMagic: 'Magia de Multiplicación',
+      divMagic: 'Magia de División',
     },
     bottomNav: { home: 'Inicio', learn: 'Aprender', rewards: 'Premios', history: 'Historial', aria: 'Menú inferior' },
     concept: {
@@ -2124,6 +2138,8 @@ const completeUiTranslations: Partial<Record<SupportedLanguage, TranslationTree>
       weekThu: '木',
       weekFri: '金',
       weekSat: '土',
+      mulMagic: 'かけ算の魔法',
+      divMagic: 'わり算の魔法',
     },
     bottomNav: { home: 'ホーム', learn: '学ぶ', rewards: 'ご褒美', history: 'きろく', aria: 'ナビメニュー' },
     concept: {

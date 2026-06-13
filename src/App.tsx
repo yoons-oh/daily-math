@@ -12,6 +12,8 @@ import RewardsPage    from './pages/RewardsPage'
 import HistoryPage    from './pages/HistoryPage'
 import SubscribePage  from './pages/SubscribePage'
 import SubscribeSuccessPage from './pages/SubscribeSuccessPage'
+import TimesTablePage from './pages/TimesTablePage'
+import TimesTableStudyPage from './pages/TimesTableStudyPage'
 import { getCurrentProfileId, replaceProfiles, saveProfile } from './lib/storage'
 import { onAuthStateChange } from './lib/auth'
 import { fetchChildProfiles, updateChildProfileLanguage } from './lib/childProfiles'
@@ -88,6 +90,8 @@ export default function App() {
         <Route path="/history"     element={user ? <HistoryPage /> : <Navigate to="/auth" replace />} />
         <Route path="/subscribe"         element={user ? <SubscribePage /> : <Navigate to="/auth" replace />} />
         <Route path="/subscribe/success" element={user ? <SubscribeSuccessPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/times-table"       element={user ? <TimesTablePage /> : <Navigate to="/auth" replace />} />
+        <Route path="/times-table/:dan"  element={user ? <TimesTableStudyPage /> : <Navigate to="/auth" replace />} />
         <Route path="*"            element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

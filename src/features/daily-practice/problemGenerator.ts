@@ -110,6 +110,27 @@ function genBorrowSub(digits: 1 | 2 | 3): [number, number] {
   return [605, 247]
 }
 
+// ─── 구구단 수준 곱셈 생성 ────────────────────────────────
+const MUL_DAN_RANGES: Record<Level, [number, number]> = {
+  L1:  [2, 4],
+  L2A: [5, 7],
+  L2B: [5, 7],
+  L3A: [2, 9],
+  L3B: [2, 9],
+}
+
+function genMul(level: Level): [number, number] {
+  const [minDan, maxDan] = MUL_DAN_RANGES[level]
+  const dan = Math.floor(Math.random() * (maxDan - minDan + 1)) + minDan
+  const factor = Math.floor(Math.random() * 9) + 1
+  return [dan, factor]
+}
+
+function genDiv(level: Level): [number, number] {
+  const [n1, n2] = genMul(level)
+  return [n1 * n2, n1]  // dividend ÷ divisor = quotient
+}
+
 // ─── 단일 문제 생성 ───────────────────────────────────────
 export function generateQuestion(
   level: Level,
@@ -117,6 +138,18 @@ export function generateQuestion(
   existingIds: Set<string>
 ): MathQuestion {
   const config = LEVEL_CONFIGS[level]
+
+  if (operation === 'mul' || operation === 'div') {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const [n1, n2] = operation === 'mul' ? genMul(level) : genDiv(level)
+      const answer = operation === 'mul' ? n1 * n2 : n1 / n2
+      const id = `${operation}_${n1}_${n2}`
+      if (existingIds.has(id)) continue
+      return { id, num1: n1, num2: n2, operation, answer, hasCarry: false, hasBorrow: false }
+    }
+    const [fn1, fn2] = operation === 'mul' ? [3, 4] : [12, 3]
+    return { id: `${operation}_fallback`, num1: fn1, num2: fn2, operation, answer: operation === 'mul' ? fn1 * fn2 : fn1 / fn2, hasCarry: false, hasBorrow: false }
+  }
 
   for (let attempt = 0; attempt < 200; attempt++) {
     let n1: number, n2: number

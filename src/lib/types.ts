@@ -25,7 +25,7 @@ export const LEVEL_LABELS: Record<Level, string> = {
 export const LEVEL_ORDER: Level[] = ['L1', 'L2A', 'L2B', 'L3A', 'L3B']
 
 // ─── 연산 종류 ──────────────────────────────────────
-export type Operation = 'add' | 'sub'
+export type Operation = 'add' | 'sub' | 'mul' | 'div'
 
 // ─── 문제 ──────────────────────────────────────────
 export interface MathQuestion {

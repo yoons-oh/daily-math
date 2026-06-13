@@ -36,8 +36,8 @@ export default function MathColumnProblem({
   const dAns = getDigits(answer, maxDigits)
   const dUser = userAnswer ? getDigits(Number(userAnswer), maxDigits) : []
 
-  const opSymbol = operation === 'add' ? '+' : '−'
-  const opColor  = operation === 'add' ? '#5CC8A0' : '#FF9F5B'
+  const opSymbol = operation === 'add' ? '+' : operation === 'sub' ? '−' : operation === 'mul' ? '×' : '÷'
+  const opColor  = operation === 'add' ? '#5CC8A0' : operation === 'mul' ? '#7B69EE' : '#FF9F5B'
 
   const carryDigits  = operation === 'add' && question.hasCarry  ? getCarryMarks(num1, num2, maxDigits)  : []
   const borrowDigits = operation === 'sub' && question.hasBorrow ? getBorrowMarks(num1, num2, maxDigits) : []

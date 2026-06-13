@@ -41,7 +41,7 @@ const WRONG_MSGS = [
 
 export default function PracticePage() {
   const { op }    = useParams<{ op: string }>()
-  const operation = (op === 'sub' ? 'sub' : 'add') as Operation
+  const operation = (['add', 'sub', 'mul', 'div'].includes(op ?? '') ? op : 'add') as Operation
   const navigate  = useNavigate()
   const isAdd     = operation === 'add'
   const { t } = useI18n()

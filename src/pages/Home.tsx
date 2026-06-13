@@ -68,6 +68,28 @@ const MENU_ITEMS = [
     mark: '-',
   },
   {
+    icon: '⭐',
+    title: '곱셈 마법',
+    sub: '구구단 문제',
+    route: '/practice/mul',
+    image: '/home/menu-add.jpg',
+    gradient: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)',
+    shadow: '#5B21B6',
+    glow: 'rgba(167, 139, 250, 0.45)',
+    mark: '×',
+  },
+  {
+    icon: '🔮',
+    title: '나누기 마법',
+    sub: '나눗셈 문제',
+    route: '/practice/div',
+    image: '/home/menu-sub.jpg',
+    gradient: 'linear-gradient(135deg, #FBA44B 0%, #F97316 100%)',
+    shadow: '#C2510C',
+    glow: 'rgba(251, 164, 75, 0.45)',
+    mark: '÷',
+  },
+  {
     icon: '🧪',
     title: '마법 배우기',
     sub: '개념 애니메이션',
@@ -167,6 +189,8 @@ export default function Home() {
     const dailySub = t('home.todayN', { count: subscription.dailyLimit })
     if (route === '/practice/add') return { title: t('home.addMagic'), sub: dailySub }
     if (route === '/practice/sub') return { title: t('home.subMagic'), sub: dailySub }
+    if (route === '/practice/mul') return { title: t('home.mulMagic'), sub: dailySub }
+    if (route === '/practice/div') return { title: t('home.divMagic'), sub: dailySub }
     if (route === '/concept') return { title: t('home.learnMagic'), sub: t('home.conceptAnimation') }
     if (route === '/rewards') return { title: t('home.rewards'), sub: t('home.starsCount', { count: starCount }) }
     return { title: '', sub: '' }
@@ -180,7 +204,7 @@ export default function Home() {
       zIndex: 2,
     }
 
-    if (route === '/practice/add' || route === '/practice/sub') {
+    if (route === '/practice/add' || route === '/practice/sub' || route === '/practice/mul' || route === '/practice/div') {
       return {
         ...base,
         left: '17%',
