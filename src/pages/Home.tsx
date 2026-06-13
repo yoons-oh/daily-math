@@ -280,7 +280,7 @@ export default function Home() {
                   {t('home.title')}
                 </h1>
                 <p style={{ color: '#8B8DA4', fontSize: '0.78rem', fontWeight: 800, marginTop: 4 }}>
-                  {t('home.subtitle')}
+                  {t('home.subtitle', { count: subscription.dailyLimit })}
                 </p>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function Home() {
             </motion.button>
           </div>
 
-          <div className="flex gap-2 mt-3 flex-wrap">
+          <div className="flex gap-2 mt-3 items-center" style={{ flexWrap: 'nowrap', overflow: 'hidden' }}>
             <select
               value={profile.currentLevel}
               onChange={event => changeLevel(event.target.value as Level)}
@@ -331,12 +331,15 @@ export default function Home() {
               style={{
                 height: 32,
                 border: 'none',
-                maxWidth: 260,
+                flex: 1,
+                minWidth: 0,
+                maxWidth: 200,
                 fontSize: '0.78rem',
                 fontWeight: 900,
                 padding: '0 10px',
                 outline: 'none',
                 cursor: 'pointer',
+                overflow: 'hidden',
               }}
             >
               {SELECTABLE_LEVELS.map(level => (
@@ -344,7 +347,7 @@ export default function Home() {
               ))}
             </select>
             {streak && streak.currentStreak > 0 && (
-              <div className="streak-badge">🔥 {t('home.streakShort', { count: streak.currentStreak })}</div>
+              <div className="streak-badge" style={{ flexShrink: 0 }}>🔥 {t('home.streakShort', { count: streak.currentStreak })}</div>
             )}
             {subscription.isPro && (
               <div style={{
@@ -352,6 +355,7 @@ export default function Home() {
                 background: 'linear-gradient(135deg,#62D6B2,#3EC99A)',
                 color: '#fff', fontWeight: 900, fontSize: '0.78rem',
                 display: 'flex', alignItems: 'center', gap: 4,
+                flexShrink: 0,
                 boxShadow: '0 3px 8px rgba(98,214,178,0.4)',
               }}>✨ PRO</div>
             )}
@@ -369,6 +373,7 @@ export default function Home() {
                 fontWeight: 900,
                 padding: '0 10px',
                 outline: 'none',
+                flexShrink: 0,
                 boxShadow: '0 4px 12px rgba(76, 106, 170, 0.12)',
               }}
             >
