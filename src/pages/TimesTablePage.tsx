@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
-import { getTimesTableMastery } from './TimesTableStudyPage'
+import { getTimesTableStudyMastery, getTimesTableTestMastery } from '../lib/timesTableMastery'
 import { useI18n } from '../i18n'
 
 const DANS = [2, 3, 4, 5, 6, 7, 8, 9]
@@ -21,10 +21,12 @@ const DAN_COLORS = [
 export default function TimesTablePage() {
   const navigate = useNavigate()
   const { t } = useI18n()
-  const [mastery, setMastery] = useState<Set<number>>(new Set())
+  const [studied, setStudied] = useState<Set<number>>(new Set())
+  const [tested, setTested]   = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    setMastery(getTimesTableMastery())
+    setStudied(getTimesTableStudyMastery())
+    setTested(getTimesTableTestMastery())
   }, [])
 
   return (
@@ -39,16 +41,28 @@ export default function TimesTablePage() {
             </motion.button>
             <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#2D2D3A' }}>⭐ {t('timesTablePage.title')}</div>
           </div>
+          {/* 범례 */}
+          <div style={{ display: 'flex', gap: 14, marginTop: 8, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 800, color: '#7A7A9A' }}>
+              <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#16A34A', fontWeight: 900 }}>✓</span>
+              학습완료
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 800, color: '#7A7A9A' }}>
+              <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#D97706' }}>★</span>
+              테스트 합격
+            </div>
+          </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 32px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 32px' }}>
           <p style={{ color: '#7A7A9A', fontWeight: 800, fontSize: '0.88rem', marginBottom: 16, textAlign: 'center' }}>
             {t('timesTablePage.selectDan')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {DANS.map((dan, i) => {
               const c = DAN_COLORS[i % DAN_COLORS.length]
-              const isMastered = mastery.has(dan)
+              const isStudied = studied.has(dan)
+              const isTested  = tested.has(dan)
               return (
                 <motion.button
                   key={dan}
@@ -65,14 +79,26 @@ export default function TimesTablePage() {
                     position: 'relative',
                   }}
                 >
-                  {isMastered && (
+                  {/* 테스트 합격 ★ 뱃지 (우선순위 높음) */}
+                  {isTested && (
                     <div style={{
-                      position: 'absolute', top: 8, right: 10,
-                      width: 22, height: 22, borderRadius: '50%',
+                      position: 'absolute', top: 7, right: 8,
+                      width: 24, height: 24, borderRadius: '50%',
+                      background: 'linear-gradient(135deg,#FBBF24,#F59E0B)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.75rem', fontWeight: 900, color: '#5A3800',
+                      boxShadow: '0 2px 6px rgba(180,83,9,0.35)',
+                    }}>★</div>
+                  )}
+                  {/* 학습완료 ✓ 뱃지 (테스트 없을 때만) */}
+                  {isStudied && !isTested && (
+                    <div style={{
+                      position: 'absolute', top: 7, right: 8,
+                      width: 24, height: 24, borderRadius: '50%',
                       background: 'rgba(255,255,255,0.95)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '0.8rem', fontWeight: 900, color: '#16A34A',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                     }}>✓</div>
                   )}
                   <span style={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>{dan}×</span>

@@ -5,24 +5,13 @@ import MagicBackground from '../components/MagicBackground'
 import { say, stopAll, unlockTts } from '../lib/tts'
 import { useI18n } from '../i18n'
 import { SupportedLanguage } from '../lib/language'
+import {
+  getTimesTableStudyMastery,
+  saveTimesTableStudyMastery,
+} from '../lib/timesTableMastery'
 
-const MASTERY_KEY = 'dm_times_table_mastery'
-
-export function getTimesTableMastery(): Set<number> {
-  try {
-    const raw = localStorage.getItem(MASTERY_KEY)
-    if (!raw) return new Set()
-    return new Set(JSON.parse(raw) as number[])
-  } catch { return new Set() }
-}
-
-function saveMastery(dan: number) {
-  try {
-    const current = getTimesTableMastery()
-    current.add(dan)
-    localStorage.setItem(MASTERY_KEY, JSON.stringify([...current]))
-  } catch {}
-}
+// Backward-compat alias used by TimesTablePage
+export { getTimesTableStudyMastery as getTimesTableMastery } from '../lib/timesTableMastery'
 
 function getMulFactText(dan: number, factor: number, product: number, language: SupportedLanguage): string {
   switch (language) {
@@ -75,7 +64,7 @@ export default function TimesTableStudyPage() {
   }, [dan, language])
 
   useEffect(() => {
-    if (allRevealed) saveMastery(dan)
+    if (allRevealed) saveTimesTableStudyMastery(dan)
   }, [allRevealed, dan])
 
   async function revealAndSpeak(factor: number, product: number) {
@@ -225,32 +214,49 @@ export default function TimesTableStudyPage() {
             })}
           </div>
 
-          {/* 완료 배너 */}
+          {/* 완료 배너 + 시험 보기 버튼 */}
           <AnimatePresence>
             {allRevealed && (
               <motion.div
                 initial={{ opacity: 0, y: 14, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                style={{
-                  marginTop: 20, padding: '18px', borderRadius: 22, textAlign: 'center',
+                style={{ marginTop: 20 }}
+              >
+                <div style={{
+                  padding: '18px', borderRadius: 22, textAlign: 'center',
                   background: 'linear-gradient(135deg,rgba(167,139,250,0.2),rgba(124,58,237,0.12))',
                   border: '2px solid rgba(167,139,250,0.5)',
                   boxShadow: '0 8px 0 rgba(124,58,237,0.2), 0 14px 28px rgba(167,139,250,0.22)',
-                }}
-              >
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{ fontSize: '2.4rem', marginBottom: 6 }}
-                >🎉</motion.div>
-                <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#5B21B6' }}>
-                  {t('timesTablePage.mastered', { dan })}
+                  marginBottom: 12,
+                }}>
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{ fontSize: '2.4rem', marginBottom: 6 }}
+                  >🎉</motion.div>
+                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#5B21B6' }}>
+                    {t('timesTablePage.mastered', { dan })}
+                  </div>
                 </div>
+
+                {/* 시험 보기 버튼 */}
+                <motion.button
+                  whileTap={{ scale: 0.97, y: 3 }}
+                  onClick={() => { stopAll(); navigate(`/times-table/${dan}/test`) }}
+                  style={{
+                    width: '100%', height: 54, borderRadius: 18, border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg,#FBBF24,#F59E0B)',
+                    color: '#5A3800', fontWeight: 900, fontSize: '1rem',
+                    boxShadow: '0 6px 0 #B45309, 0 10px 24px rgba(251,191,36,0.38)',
+                  }}
+                >
+                  🌟 {t('timesTablePage.startTest', { dan })}
+                </motion.button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* 문제 풀기 버튼 */}
+          {/* 곱셈 마법 문제 풀기 버튼 */}
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -258,7 +264,7 @@ export default function TimesTableStudyPage() {
             whileTap={{ scale: 0.97, y: 3 }}
             onClick={() => { stopAll(); navigate('/practice/mul') }}
             style={{
-              width: '100%', height: 54, borderRadius: 18, border: 'none', marginTop: 20,
+              width: '100%', height: 54, borderRadius: 18, border: 'none', marginTop: 12,
               background: 'linear-gradient(135deg,#A78BFA,#7C3AED)',
               color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: 'pointer',
               boxShadow: '0 6px 0 #5B21B6, 0 10px 24px rgba(167,139,250,0.38)',
