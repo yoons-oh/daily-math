@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.dailymath.app",
-    "sha256_cert_fingerprints": ["PLACEHOLDER_REPLACE_AFTER_BUBBLEWRAP_OR_PWABUILDER"]
+    "package_name": "app.vercel.daily_math_one.twa",
+    "sha256_cert_fingerprints": ["37:CC:81:80:8A:5D:C9:EF:94:CD:DC:9C:17:79:1B:9C:CD:38:7D:12:AE:E5:7A:A1:CE:FC:82:BB:12:CE:9A:B2"]
   }
 }]
