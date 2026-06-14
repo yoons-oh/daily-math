@@ -1,5 +1,5 @@
 import {
-  ChildProfile, PracticeSession, Reward, StreakInfo, AppSettings, Level, UserRewardState
+  ChildProfile, PracticeSession, Reward, StreakInfo, AppSettings, Level, UserRewardState, Operation
 } from './types'
 import { getStoredLanguage, isSupportedLanguage } from './language'
 
@@ -176,10 +176,18 @@ export function saveSettings(s: AppSettings) {
   save(KEYS.settings, s)
 }
 
-// ─── 오늘 푼 문제 수 ─────────────────────────────────────────
+// ─── 오늘 푼 문제 수 (전체) ───────────────────────────────────
 export function getTodayQuestionCount(profileId: string): number {
   const today = getTodayDate()
   return getSessionByDate(profileId, today)
+    .reduce((sum, s) => sum + s.questions.length, 0)
+}
+
+// ─── 오늘 푼 문제 수 (연산별) ─────────────────────────────────
+export function getTodayQuestionCountByOperation(profileId: string, operation: Operation): number {
+  const today = getTodayDate()
+  return getSessionByDate(profileId, today)
+    .filter(s => s.operation === operation)
     .reduce((sum, s) => sum + s.questions.length, 0)
 }
 

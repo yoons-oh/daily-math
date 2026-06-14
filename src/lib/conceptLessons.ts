@@ -35,6 +35,16 @@ const ko: ConceptLessonMap = {
     { desc: '십의 자리: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: '다음은 십의 자리예요. 5 빼기 2는 3이에요.' },
     { desc: '정답은 38이에요!', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: '그래서 62 빼기 24의 정답은 38이에요.' },
   ],
+  'mul-basic': [
+    { desc: '3×4는 3을 4번 더하는 거예요!', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 곱하기 4는 3을 네 번 더하는 거예요.' },
+    { desc: '3, 6, 9, 12 — 하나씩 세어봐요!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: '3, 6, 9, 12, 하나씩 세어볼까요?' },
+    { desc: '3×4=12 정답이에요! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: '그래서 3 곱하기 4의 정답은 12예요!' },
+  ],
+  'div-basic': [
+    { desc: '12를 3명이 똑같이 나눠요!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: '12를 3명이 똑같이 나눠볼게요.' },
+    { desc: '3×?=12 → 구구단에서 찾아요!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3 곱하기 얼마가 12인지 구구단으로 찾아요.' },
+    { desc: '한 명에게 4개씩! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: '그래서 12 나누기 3의 정답은 4예요!' },
+  ],
 }
 
 const en: ConceptLessonMap = {
@@ -60,6 +70,16 @@ const en: ConceptLessonMap = {
     { desc: 'Ones: 12 - 4 = 8', calc: '12 - 4 = 8', hl: 'ones', showAns: false, carry: ['⁵', ''], voice: 'The borrowed 10 joins the 2, so the ones become 12. 12 minus 4 equals 8.' },
     { desc: 'Tens: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: 'Now subtract the tens. 5 minus 2 equals 3.' },
     { desc: 'The answer is 38!', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'So 62 minus 24 equals 38.' },
+  ],
+  'mul-basic': [
+    { desc: '3×4 means adding 3 four times!', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 times 4 means adding 3 four times.' },
+    { desc: '3, 6, 9, 12 — count up together!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: "Let's count: 3, 6, 9, 12." },
+    { desc: '3×4=12. Great job! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: 'So 3 times 4 equals 12!' },
+  ],
+  'div-basic': [
+    { desc: 'Share 12 equally among 3!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: "Let's share 12 equally among 3 people." },
+    { desc: '3×?=12 → find it in the times table!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: 'Which times table fact gives 12 when multiplied by 3?' },
+    { desc: '4 each! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: 'So 12 divided by 3 equals 4!' },
   ],
 }
 
@@ -87,6 +107,16 @@ const zhCN: ConceptLessonMap = {
     { desc: '十位：5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: '现在减十位。5 减 2 等于 3。' },
     { desc: '答案是 38！', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: '所以 62 减 24 等于 38。' },
   ],
+  'mul-basic': [
+    { desc: '3×4 就是把 3 加 4 次！', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 乘以 4，就是把 3 加 4 次。' },
+    { desc: '3, 6, 9, 12 — 一起数一数！', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: '一起来数：3，6，9，12。' },
+    { desc: '3×4=12，答对了！🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: '所以 3 乘以 4 等于 12！' },
+  ],
+  'div-basic': [
+    { desc: '把 12 平均分给 3 个人！', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: '我们把 12 平均分给 3 个人。' },
+    { desc: '3×?=12 → 用乘法口诀来找！', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3 乘以几等于 12？用乘法口诀找找看。' },
+    { desc: '每人 4 个！12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: '所以 12 除以 3 等于 4！' },
+  ],
 }
 
 const vi: ConceptLessonMap = {
@@ -112,6 +142,16 @@ const vi: ConceptLessonMap = {
     { desc: 'Hàng đơn vị: 12 - 4 = 8', calc: '12 - 4 = 8', hl: 'ones', showAns: false, carry: ['⁵', ''], voice: '10 mượn được cộng với 2, nên hàng đơn vị thành 12. 12 trừ 4 bằng 8.' },
     { desc: 'Hàng chục: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: 'Bây giờ trừ hàng chục. 5 trừ 2 bằng 3.' },
     { desc: 'Đáp án là 38!', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'Vậy 62 trừ 24 bằng 38.' },
+  ],
+  'mul-basic': [
+    { desc: '3×4 là cộng 3 bốn lần!', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 nhân 4 nghĩa là cộng 3 bốn lần.' },
+    { desc: '3, 6, 9, 12 — đếm từng bước!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: 'Hãy đếm: 3, 6, 9, 12.' },
+    { desc: '3×4=12. Đúng rồi! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: 'Vậy 3 nhân 4 bằng 12!' },
+  ],
+  'div-basic': [
+    { desc: 'Chia đều 12 cho 3 người!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: 'Hãy chia đều 12 cho 3 người.' },
+    { desc: '3×?=12 → tìm trong bảng nhân!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3 nhân mấy thì bằng 12? Hãy tìm trong bảng nhân.' },
+    { desc: 'Mỗi người 4 cái! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: 'Vậy 12 chia cho 3 bằng 4!' },
   ],
 }
 
@@ -139,6 +179,16 @@ const th: ConceptLessonMap = {
     { desc: 'หลักสิบ: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: 'ตอนนี้ลบหลักสิบ 5 ลบ 2 เท่ากับ 3' },
     { desc: 'คำตอบคือ 38!', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'ดังนั้น 62 ลบ 24 เท่ากับ 38' },
   ],
+  'mul-basic': [
+    { desc: '3×4 คือการบวก 3 สี่ครั้ง!', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 คูณ 4 หมายถึงการบวก 3 สี่ครั้ง' },
+    { desc: '3, 6, 9, 12 — นับทีละตัว!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: 'มานับกัน: 3, 6, 9, 12' },
+    { desc: '3×4=12 ถูกต้อง! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: 'ดังนั้น 3 คูณ 4 เท่ากับ 12!' },
+  ],
+  'div-basic': [
+    { desc: 'แบ่ง 12 ให้ 3 คนเท่าๆ กัน!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: 'มาแบ่ง 12 ให้ 3 คน อย่างเท่าเทียม' },
+    { desc: '3×?=12 → หาจากสูตรคูณ!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3 คูณเท่าไหร่จึงได้ 12 หาจากสูตรคูณ' },
+    { desc: 'คนละ 4 อัน! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: 'ดังนั้น 12 หาร 3 เท่ากับ 4!' },
+  ],
 }
 
 const id: ConceptLessonMap = {
@@ -164,6 +214,16 @@ const id: ConceptLessonMap = {
     { desc: 'Satuan: 12 - 4 = 8', calc: '12 - 4 = 8', hl: 'ones', showAns: false, carry: ['⁵', ''], voice: '10 yang dipinjam bergabung dengan 2, jadi satuannya menjadi 12. 12 kurang 4 sama dengan 8.' },
     { desc: 'Puluhan: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: 'Sekarang kurangi puluhan. 5 kurang 2 sama dengan 3.' },
     { desc: 'Jawabannya 38!', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'Jadi 62 kurang 24 sama dengan 38.' },
+  ],
+  'mul-basic': [
+    { desc: '3×4 artinya 3 dijumlahkan 4 kali!', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 kali 4 artinya menjumlahkan 3 sebanyak 4 kali.' },
+    { desc: '3, 6, 9, 12 — hitung satu per satu!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: 'Ayo hitung: 3, 6, 9, 12.' },
+    { desc: '3×4=12. Hebat! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: 'Jadi 3 kali 4 sama dengan 12!' },
+  ],
+  'div-basic': [
+    { desc: 'Bagikan 12 merata ke 3 orang!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: 'Ayo bagikan 12 secara merata kepada 3 orang.' },
+    { desc: '3×?=12 → cari di tabel perkalian!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3 dikali berapa sama dengan 12? Cari di tabel perkalian.' },
+    { desc: '4 untuk masing-masing! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: 'Jadi 12 dibagi 3 sama dengan 4!' },
   ],
 }
 
@@ -191,6 +251,16 @@ const es: ConceptLessonMap = {
     { desc: 'Decenas: 5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: 'Ahora resta las decenas. 5 menos 2 es igual a 3.' },
     { desc: 'La respuesta es 38.', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'Entonces 62 menos 24 es igual a 38.' },
   ],
+  'mul-basic': [
+    { desc: '3×4 significa sumar 3 cuatro veces.', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3 por 4 significa sumar 3 cuatro veces.' },
+    { desc: '3, 6, 9, 12 — ¡contemos juntos!', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: 'Contemos: 3, 6, 9, 12.' },
+    { desc: '3×4=12. ¡Muy bien! 🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: '¡Entonces 3 por 4 es igual a 12!' },
+  ],
+  'div-basic': [
+    { desc: '¡Reparte 12 entre 3 personas!', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: 'Vamos a repartir 12 en partes iguales entre 3 personas.' },
+    { desc: '3×?=12 → ¡búscalo en la tabla!', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '¿3 por cuánto es 12? Búscalo en la tabla de multiplicar.' },
+    { desc: '¡4 para cada uno! 12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: '¡Entonces 12 dividido entre 3 es igual a 4!' },
+  ],
 }
 
 const ja: ConceptLessonMap = {
@@ -216,6 +286,16 @@ const ja: ConceptLessonMap = {
     { desc: '一の位：12 - 4 = 8', calc: '12 - 4 = 8', hl: 'ones', showAns: false, carry: ['⁵', ''], voice: '借りた10と2を合わせると12。12ひく4は8です。' },
     { desc: '十の位：5 - 2 = 3', calc: '5 - 2 = 3', hl: 'tens', showAns: false, carry: ['⁵', ''], voice: '次に十の位をひきます。5ひく2は3です。' },
     { desc: '答えは38です！', calc: '62 - 24 = 38', hl: 'all', showAns: true, carry: ['⁵', ''], voice: 'なので62ひく24の答えは38です。' },
+  ],
+  'mul-basic': [
+    { desc: '3×4は3を4回たすことだよ！', calc: '3 + 3 + 3 + 3', hl: '', showAns: false, carry: ['', ''], voice: '3かける4は、3を4回たすことです。' },
+    { desc: '3, 6, 9, 12 — 一緒に数えよう！', calc: '3 → 6 → 9 → 12', hl: '', showAns: false, carry: ['', ''], voice: '一緒に数えましょう。3、6、9、12。' },
+    { desc: '3×4=12 正解！🎉', calc: '3 × 4 = 12', hl: 'all', showAns: true, carry: ['', ''], voice: 'なので3かける4の答えは12です！' },
+  ],
+  'div-basic': [
+    { desc: '12を3人で同じ数ずつ分けよう！', calc: '12 ÷ 3 = ?', hl: '', showAns: false, carry: ['', ''], voice: '12を3人で同じ数ずつ分けましょう。' },
+    { desc: '3×?=12 → 九九で探してみよう！', calc: '3 × 4 = 12', hl: '', showAns: false, carry: ['', ''], voice: '3かけるいくつが12になる？九九で探しましょう。' },
+    { desc: '1人4個ずつ！12÷3=4 🎉', calc: '12 ÷ 3 = 4', hl: 'all', showAns: true, carry: ['', ''], voice: 'なので12わる3の答えは4です！' },
   ],
 }
 

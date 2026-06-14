@@ -1,0 +1,18 @@
+name: Daily Push Notification
+
+on:
+  schedule:
+    # 매일 낮 12시 KST (UTC+9 → UTC 03:00)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # 수동 테스트 가능
+
+jobs:
+  send-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send daily push notification
+        run: |
+          curl -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/send-daily-push" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"message": "오늘의 수학 연습을 시작해요! 🌟"}'

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useParams } from 'react-router-dom'
 import MagicBackground from '../components/MagicBackground'
@@ -13,9 +13,31 @@ import {
 // Backward-compat alias used by TimesTablePage
 export { getTimesTableStudyMastery as getTimesTableMastery } from '../lib/timesTableMastery'
 
+// 한국 구구단 암송 스타일: 이일은이, 이이는사, 이삼은육 ...
+function toSinoKorean(n: number): string {
+  const u = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
+  if (n < 10) return u[n]
+  const tens = Math.floor(n / 10)
+  const ones = n % 10
+  return (tens === 1 ? '' : u[tens]) + '십' + (ones === 0 ? '' : u[ones])
+}
+
+function getKoreanGugudanText(dan: number, factor: number, product: number): string {
+  const u = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
+  // 종성 여부: 1=일✓ 2=이✗ 3=삼✓ 4=사✗ 5=오✗ 6=육✓ 7=칠✓ 8=팔✓ 9=구✗
+  const jong = [false, true, false, true, false, false, true, true, true, false]
+  const danW    = u[dan]
+  const factorW = u[factor]
+  const prodW   = toSinoKorean(product)
+  if (product < 10) {
+    return `${danW} ${factorW}${jong[factor] ? '은' : '는'} ${prodW}`
+  }
+  return `${danW} ${factorW} ${prodW}`
+}
+
 function getMulFactText(dan: number, factor: number, product: number, language: SupportedLanguage): string {
   switch (language) {
-    case 'ko': return `${dan} 곱하기 ${factor}는 ${product}`
+    case 'ko': return getKoreanGugudanText(dan, factor, product)
     case 'en': return `${dan} times ${factor} is ${product}`
     case 'zh-CN': return `${dan}乘以${factor}等于${product}`
     case 'vi': return `${dan} nhân ${factor} bằng ${product}`
@@ -41,14 +63,18 @@ function getDanIntroText(dan: number, language: SupportedLanguage): string {
   }
 }
 
+const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
+
 export default function TimesTableStudyPage() {
   const navigate = useNavigate()
   const { language, t } = useI18n()
   const { dan: danParam } = useParams<{ dan: string }>()
   const dan = Number(danParam) || 2
-  const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const [revealed, setRevealed] = useState<Set<number>>(new Set([1,2,3,4,5,6,7,8,9]))
   const [speakingFactor, setSpeakingFactor] = useState<number | null>(null)
-  const lastSpokenRef = useRef<number | null>(null)
+  const [isPlayingAll, setIsPlayingAll] = useState(false)
+  const lastSpokenRef   = useRef<number | null>(null)
+  const playingAllRef   = useRef(false)
 
   const facts = Array.from({ length: 9 }, (_, i) => ({
     factor: i + 1,
@@ -60,7 +86,7 @@ export default function TimesTableStudyPage() {
   useEffect(() => {
     const intro = getDanIntroText(dan, language as SupportedLanguage)
     say(intro, false, language as SupportedLanguage).catch(() => {})
-    return () => stopAll()
+    return () => { stopAll(); playingAllRef.current = false }
   }, [dan, language])
 
   useEffect(() => {
@@ -69,11 +95,7 @@ export default function TimesTableStudyPage() {
 
   async function revealAndSpeak(factor: number, product: number) {
     await unlockTts()
-    setRevealed(prev => {
-      const next = new Set(prev)
-      next.add(factor)
-      return next
-    })
+    setRevealed(prev => { const next = new Set(prev); next.add(factor); return next })
     lastSpokenRef.current = factor
     setSpeakingFactor(factor)
     const text = getMulFactText(dan, factor, product, language as SupportedLanguage)
@@ -92,6 +114,7 @@ export default function TimesTableStudyPage() {
   }
 
   async function handleCardTap(factor: number, product: number) {
+    if (isPlayingAll) return
     if (revealed.has(factor)) {
       lastSpokenRef.current = factor
       setSpeakingFactor(factor)
@@ -102,6 +125,38 @@ export default function TimesTableStudyPage() {
       await revealAndSpeak(factor, product)
     }
   }
+
+  const handlePlayAll = useCallback(async () => {
+    if (isPlayingAll) {
+      stopAll()
+      playingAllRef.current = false
+      setIsPlayingAll(false)
+      setSpeakingFactor(null)
+      return
+    }
+    await unlockTts()
+    playingAllRef.current = true
+    setIsPlayingAll(true)
+
+    const lang = language as SupportedLanguage
+    const intro = getDanIntroText(dan, lang)
+    await say(intro, false, lang)
+
+    for (const { factor, product } of facts) {
+      if (!playingAllRef.current) break
+      setRevealed(prev => { const next = new Set(prev); next.add(factor); return next })
+      lastSpokenRef.current = factor
+      setSpeakingFactor(factor)
+      const text = getMulFactText(dan, factor, product, lang)
+      await say(text, false, lang)
+      if (!playingAllRef.current) break
+      await delay(160)
+    }
+
+    setSpeakingFactor(null)
+    playingAllRef.current = false
+    setIsPlayingAll(false)
+  }, [dan, language, facts, isPlayingAll])
 
   return (
     <div className="app-container" style={{ background: 'linear-gradient(160deg,#F7FFF9 0%,#EEF8FF 45%,#F8F2FF 100%)' }}>
@@ -119,18 +174,40 @@ export default function TimesTableStudyPage() {
                 ⭐ {t('timesTablePage.danTitle', { dan })}
               </div>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.88 }}
-              onClick={replayLast}
-              style={{
-                width: 42, height: 42, borderRadius: 14,
-                background: 'linear-gradient(135deg,#A78BFA,#7C3AED)',
-                border: 'none', cursor: 'pointer', fontSize: '1.1rem',
-                boxShadow: '0 4px 0 #5B21B6',
-              }}
-            >
-              🔊
-            </motion.button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {/* 마지막 카드 재생 */}
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={replayLast}
+                title="마지막 항목 다시 듣기"
+                style={{
+                  width: 42, height: 42, borderRadius: 14,
+                  background: 'rgba(167,139,250,0.18)',
+                  border: '1.5px solid rgba(167,139,250,0.4)',
+                  cursor: 'pointer', fontSize: '1.1rem',
+                }}
+              >
+                🔊
+              </motion.button>
+              {/* 전체 자동 재생 */}
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={handlePlayAll}
+                title={isPlayingAll ? '정지' : '전체 듣기'}
+                style={{
+                  height: 42, borderRadius: 14, paddingInline: 14,
+                  background: isPlayingAll
+                    ? 'linear-gradient(135deg,#FB923C,#F97316)'
+                    : 'linear-gradient(135deg,#A78BFA,#7C3AED)',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: '0.82rem', fontWeight: 900, color: '#fff',
+                  boxShadow: isPlayingAll ? '0 4px 0 #C2510C' : '0 4px 0 #5B21B6',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isPlayingAll ? '⏹ 정지' : '▶ 전체 듣기'}
+              </motion.button>
+            </div>
           </div>
           {/* 진행 바 */}
           <div style={{ marginTop: 10, height: 6, borderRadius: 999, background: 'rgba(167,139,250,0.15)' }}>
@@ -145,70 +222,44 @@ export default function TimesTableStudyPage() {
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 32px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             {facts.map(({ factor, product }, i) => {
-              const isRevealed = revealed.has(factor)
               const isSpeaking = speakingFactor === factor
               return (
                 <motion.button
                   key={factor}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleCardTap(factor, product)}
                   style={{
-                    borderRadius: 18, cursor: 'pointer', padding: '14px 20px',
-                    background: isRevealed
-                      ? 'linear-gradient(135deg,rgba(167,139,250,0.18),rgba(124,58,237,0.1))'
-                      : 'rgba(255,255,255,0.78)',
+                    borderRadius: 16, cursor: 'pointer', padding: '10px 12px',
+                    background: 'linear-gradient(135deg,rgba(167,139,250,0.18),rgba(124,58,237,0.1))',
                     boxShadow: isSpeaking
-                      ? '0 0 0 3px rgba(167,139,250,0.7), 0 6px 0 rgba(124,58,237,0.3), 0 10px 24px rgba(167,139,250,0.3)'
-                      : isRevealed
-                        ? '0 4px 0 rgba(124,58,237,0.25), 0 8px 20px rgba(167,139,250,0.22)'
-                        : '0 4px 0 rgba(180,180,210,0.5), 0 8px 18px rgba(76,106,170,0.1)',
-                    border: isRevealed ? '1.5px solid rgba(167,139,250,0.4)' : '1.5px solid rgba(255,255,255,0.9)',
+                      ? '0 0 0 3px rgba(167,139,250,0.7), 0 4px 0 rgba(124,58,237,0.3)'
+                      : '0 4px 0 rgba(124,58,237,0.2), 0 6px 16px rgba(167,139,250,0.15)',
+                    border: isSpeaking ? '2px solid rgba(167,139,250,0.8)' : '1.5px solid rgba(167,139,250,0.35)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     transition: 'box-shadow 0.2s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {isSpeaking && (
                       <motion.span
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 0.6, repeat: Infinity }}
-                        style={{ fontSize: '1rem' }}
+                        style={{ fontSize: '0.85rem' }}
                       >🔊</motion.span>
                     )}
-                    <span style={{ fontWeight: 900, fontSize: '1.3rem', color: '#2D2D3A' }}>
+                    <span style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2D2D3A' }}>
                       {dan} × {factor}
                     </span>
                   </div>
-                  <AnimatePresence mode="wait">
-                    {isRevealed ? (
-                      <motion.span
-                        key="answer"
-                        initial={{ opacity: 0, scale: 0.6, x: 8 }}
-                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.6 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                        style={{ fontWeight: 900, fontSize: '1.5rem', color: '#7C3AED' }}
-                      >
-                        = {product}
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="hidden"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        style={{ fontWeight: 900, fontSize: '1.1rem', color: '#B0B0C8' }}
-                      >
-                        {t('timesTablePage.tapToReveal')}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#7C3AED' }}>
+                    = {product}
+                  </span>
                 </motion.button>
               )
             })}

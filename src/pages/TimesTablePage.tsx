@@ -45,11 +45,11 @@ export default function TimesTablePage() {
           <div style={{ display: 'flex', gap: 14, marginTop: 8, justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 800, color: '#7A7A9A' }}>
               <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#16A34A', fontWeight: 900 }}>✓</span>
-              학습완료
+              {t('timesTablePage.studiedLabel')}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 800, color: '#7A7A9A' }}>
               <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#D97706' }}>★</span>
-              테스트 합격
+              {t('timesTablePage.testedLabel')}
             </div>
           </div>
         </div>

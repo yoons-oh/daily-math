@@ -1,6 +1,18 @@
 import { getStoredLanguage, SupportedLanguage, TTS_LANGUAGE_MAP } from './language'
 import { supabase } from './supabase'
 
+// 언어별 여성 Neural2/WaveNet 음성 (Neural2 미지원 언어는 WaveNet 사용)
+const TTS_VOICE_MAP: Record<string, string> = {
+  'ko-KR': 'ko-KR-Neural2-A',
+  'en-US': 'en-US-Neural2-F',
+  'cmn-CN': 'cmn-CN-Wavenet-A',
+  'vi-VN': 'vi-VN-Wavenet-A',
+  'th-TH': 'th-TH-Wavenet-C',
+  'id-ID': 'id-ID-Neural2-A',
+  'es-ES': 'es-ES-Neural2-A',
+  'ja-JP': 'ja-JP-Neural2-B',
+}
+
 const audioCache = new Map<string, string>()
 let currentAudio: HTMLAudioElement | null = null
 let currentUtterance: SpeechSynthesisUtterance | null = null
@@ -41,12 +53,15 @@ async function fetchAudio(text: string, language: SupportedLanguage = getStoredL
   const languageCode = getTtsLang(language)
   const cacheKey = `${languageCode}:${text}`
   if (audioCache.has(cacheKey)) return audioCache.get(cacheKey)!
+  const voiceName = TTS_VOICE_MAP[languageCode]
   try {
     const { data, error } = await supabase.functions.invoke('tts-proxy', {
       body: {
         input: { text },
-        voice: { languageCode, ssmlGender: 'FEMALE' },
-        audioConfig: { audioEncoding: 'MP3' },
+        voice: voiceName
+          ? { languageCode, name: voiceName }
+          : { languageCode, ssmlGender: 'FEMALE' },
+        audioConfig: { audioEncoding: 'MP3', speakingRate: 1.05, pitch: 2.0 },
       },
     })
     if (error || !data?.audioContent) return null
@@ -58,8 +73,8 @@ async function fetchAudio(text: string, language: SupportedLanguage = getStoredL
   }
 }
 
-// 오디오 URL 재생 → 끝나면 resolve
-function playAudio(url: string): Promise<boolean> {
+// 오디오 URL 재생 → 끝나면 resolve (외부에서도 사용 가능)
+export function playAudio(url: string): Promise<boolean> {
   return new Promise(resolve => {
     stopAll()
     const audio = getSharedAudio() ?? new Audio()

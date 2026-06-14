@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   getCurrentProfile, saveSession, getTodayDate,
   updateStreak, appendRateLog, getUserRewardState, saveUserRewardState,
-  getTodayQuestionCount,
+  getTodayQuestionCountByOperation,
 } from '../lib/storage'
 import { ChildProfile, MathQuestion, Operation, QuestionResult } from '../lib/types'
 import { generateSession } from '../features/daily-practice/problemGenerator'
@@ -20,7 +20,6 @@ import { say, stopAll, unlockTts } from '../lib/tts'
 import { playSound, unlockSound } from '../lib/sound'
 import { useI18n } from '../i18n'
 
-const MAX_QUESTIONS = 20
 const KEYPAD_ROWS = [['7','8','9'],['4','5','6'],['1','2','3'],['clear','0','submit']]
 
 const CORRECT_MSGS = [
@@ -44,13 +43,15 @@ export default function PracticePage() {
   const operation = (['add', 'sub', 'mul', 'div'].includes(op ?? '') ? op : 'add') as Operation
   const navigate  = useNavigate()
   const isAdd     = operation === 'add'
+  const isMul     = operation === 'mul'
+  const isDiv     = operation === 'div'
   const { t } = useI18n()
   const { subscription, loading: subLoading } = useSubscription()
 
   const [profile, setProfile]     = useState<ChildProfile | null>(null)
   const [questions, setQuestions] = useState<MathQuestion[]>([])
   const [current, setCurrent]     = useState(0)
-  const [total, setTotal]         = useState(MAX_QUESTIONS)
+  const [total, setTotal]         = useState(5)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
   const [inputVal, setInputVal]   = useState('')
@@ -74,8 +75,8 @@ export default function PracticePage() {
     if (!p) { navigate('/profiles'); return }
     setProfile(p)
 
-    const todayCount = getTodayQuestionCount(p.id)
-    const allowed = Math.max(0, subscription.dailyLimit - todayCount)
+    const todayOpCount = getTodayQuestionCountByOperation(p.id, operation)
+    const allowed = Math.max(0, subscription.dailyLimit - todayOpCount)
 
     if (allowed === 0) {
       setIsBlocked(true)
@@ -83,7 +84,7 @@ export default function PracticePage() {
       return
     }
 
-    const sessionTotal = Math.min(allowed, MAX_QUESTIONS)
+    const sessionTotal = allowed
     setTotal(sessionTotal)
     setQuestions(generateSession(p.currentLevel, operation, sessionTotal))
     playSound('magic')
@@ -92,7 +93,7 @@ export default function PracticePage() {
   }, [subLoading, subscription.dailyLimit])
 
   const q = questions[current]
-  const progressPct = Math.round((current / total) * 100)
+  const progressPct = Math.round(((current + 1) / total) * 100)
   const answerSlotCount = q
     ? Math.max(String(q.num1).length, String(q.num2).length, String(q.answer).length)
     : 1
@@ -291,6 +292,10 @@ export default function PracticePage() {
 
   const hdrGradient = isAdd
     ? 'linear-gradient(135deg,rgba(98,214,178,0.25),rgba(168,240,220,0.15))'
+    : isMul
+    ? 'linear-gradient(135deg,rgba(167,139,250,0.25),rgba(196,181,253,0.15))'
+    : isDiv
+    ? 'linear-gradient(135deg,rgba(251,146,60,0.25),rgba(253,186,116,0.15))'
     : 'linear-gradient(135deg,rgba(255,199,217,0.3),rgba(255,153,187,0.15))'
 
   return (
@@ -307,24 +312,24 @@ export default function PracticePage() {
             </motion.button>
             <div className="text-center">
               <p style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2D2D3A' }}>
-                {isAdd ? `✨ ${t('home.addMagic')}` : `🌙 ${t('home.subMagic')}`}
+                {isAdd ? `✨ ${t('home.addMagic')}` : isMul ? `⭐ ${t('home.mulMagic')}` : isDiv ? `🔮 ${t('home.divMagic')}` : `🌙 ${t('home.subMagic')}`}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#7A7A9A', fontWeight: 700 }}>
                 {t('practice.problemCounter', { current: current + 1, total })}
               </p>
             </div>
             <div style={{
-              background: isAdd ? 'linear-gradient(135deg,#62D6B2,#3EC99A)' : 'linear-gradient(135deg,#FFC7D9,#FF99BB)',
+              background: isAdd ? 'linear-gradient(135deg,#62D6B2,#3EC99A)' : isMul ? 'linear-gradient(135deg,#A78BFA,#7C3AED)' : isDiv ? 'linear-gradient(135deg,#FB923C,#EA580C)' : 'linear-gradient(135deg,#FFC7D9,#FF99BB)',
               borderRadius: 12, padding: '6px 12px',
-              color: isAdd ? '#fff' : '#7A1040', fontWeight: 900, fontSize: '0.85rem',
-              boxShadow: isAdd ? '0 3px 8px rgba(98,214,178,0.4)' : '0 3px 8px rgba(255,153,187,0.4)',
+              color: '#fff', fontWeight: 900, fontSize: '0.85rem',
+              boxShadow: isAdd ? '0 3px 8px rgba(98,214,178,0.4)' : isMul ? '0 3px 8px rgba(167,139,250,0.4)' : isDiv ? '0 3px 8px rgba(251,146,60,0.4)' : '0 3px 8px rgba(255,153,187,0.4)',
             }}>
               {results.filter(r => r.isCorrect).length}⭐
             </div>
           </div>
           <div className="progress-bar" style={{ height: 10 }}>
             <motion.div className="progress-fill" animate={{ width: `${progressPct}%` }} transition={{ duration: 0.4 }}
-              style={{ background: isAdd ? 'linear-gradient(90deg,#62D6B2,#A8D8FF)' : 'linear-gradient(90deg,#FFC7D9,#C9B6FF)' }} />
+              style={{ background: isAdd ? 'linear-gradient(90deg,#62D6B2,#A8D8FF)' : isMul ? 'linear-gradient(90deg,#A78BFA,#7C3AED)' : isDiv ? 'linear-gradient(90deg,#FB923C,#FCD34D)' : 'linear-gradient(90deg,#FFC7D9,#C9B6FF)' }} />
           </div>
         </div>
 
@@ -397,7 +402,7 @@ export default function PracticePage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 }}>
                   <span style={{ fontSize: '1.7rem', fontWeight: 900, color: '#2D2D3A' }}>{q.num1}</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 900, color: isAdd ? '#62D6B2' : '#FF9F5B' }}>{isAdd ? '+' : '−'}</span>
+                  <span style={{ fontSize: '1.5rem', fontWeight: 900, color: isAdd ? '#62D6B2' : isMul ? '#A78BFA' : isDiv ? '#FB923C' : '#FF9F5B' }}>{isAdd ? '+' : isMul ? '×' : isDiv ? '÷' : '−'}</span>
                   <span style={{ fontSize: '1.7rem', fontWeight: 900, color: '#2D2D3A' }}>{q.num2}</span>
                   <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#7A7A9A' }}>=</span>
                   <span style={{ fontSize: '1.7rem', fontWeight: 900, color: '#3EC99A' }}>{q.answer}</span>

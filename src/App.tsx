@@ -94,7 +94,7 @@ export default function App() {
         <Route path="/times-table"           element={user ? <TimesTablePage /> : <Navigate to="/auth" replace />} />
         <Route path="/times-table/:dan/test" element={user ? <TimesTableTestPage /> : <Navigate to="/auth" replace />} />
         <Route path="/times-table/:dan"      element={user ? <TimesTableStudyPage /> : <Navigate to="/auth" replace />} />
-        <Route path="*"            element={<Navigate to="/" replace />} />
+<Route path="*"            element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
       )}

@@ -40,7 +40,7 @@ function KoreanVisualSolution({ question, themeIndex }: Props) {
   const theme = EMOJI_THEMES[themeIndex % EMOJI_THEMES.length]
   const isAdd = operation === 'add'
   const usePlaceValueAdd = isAdd && Math.max(String(num1).length, String(num2).length, String(answer).length) >= 2
-  const useSubtractionVisual = !isAdd
+  const useSubtractionVisual = operation === 'sub'
   const cap = (n: number) => Math.min(n, 10)
   const c1 = cap(num1), c2 = cap(num2), cAns = cap(answer)
 
@@ -177,7 +177,7 @@ function KoreanVisualSolution({ question, themeIndex }: Props) {
   }
 
   useEffect(() => {
-    if (usePlaceValueAdd || useSubtractionVisual) return
+    if (usePlaceValueAdd || useSubtractionVisual || operation === 'mul' || operation === 'div') return
     run()
     return () => { runningRef.current = false; stopAll() }
   }, [question.id])
@@ -188,6 +188,10 @@ function KoreanVisualSolution({ question, themeIndex }: Props) {
 
   if (useSubtractionVisual) {
     return <SubtractionSolution question={question} theme={theme} />
+  }
+
+  if (operation === 'mul' || operation === 'div') {
+    return <MulDivSolution question={question} theme={theme} />
   }
 
   // ─── 이모지 셀 ──────────────────────────────────────────
@@ -323,6 +327,375 @@ function KoreanVisualSolution({ question, themeIndex }: Props) {
           </motion.div>
         )}
       </div>
+    </div>
+  )
+}
+
+function MulDivSolution({
+  question,
+  theme,
+}: {
+  question: MathQuestion
+  theme: { name: string; emoji: string }
+}) {
+  if (question.operation === 'mul') {
+    return <MultiplicationSolution question={question} theme={theme} />
+  }
+  return <DivisionSolution question={question} theme={theme} />
+}
+
+// ─── 폭죽 파티클 애니메이션 ────────────────────────────────
+const CONFETTI_SPEC = [
+  { s: '✦', x: -60, y: -38, c: '#FFE58F' },
+  { s: '★', x:  62, y: -52, c: '#A78BFA' },
+  { s: '✦', x: -28, y: -66, c: '#62D6B2' },
+  { s: '●', x:  48, y: -22, c: '#FB923C' },
+  { s: '★', x: -52, y: -14, c: '#FF7676' },
+  { s: '✦', x:  26, y: -72, c: '#A8D8FF' },
+  { s: '●', x: -14, y: -44, c: '#FFC7D9' },
+  { s: '★', x:  56, y: -62, c: '#FFE58F' },
+  { s: '✦', x:   4, y: -80, c: '#62D6B2' },
+  { s: '●', x: -66, y: -34, c: '#A78BFA' },
+  { s: '★', x:  36, y: -18, c: '#FB923C' },
+  { s: '✦', x: -40, y: -58, c: '#FF7676' },
+]
+
+function ConfettiParticles() {
+  return (
+    <div style={{ position: 'absolute', top: '50%', left: '50%', pointerEvents: 'none', zIndex: 20 }}>
+      {CONFETTI_SPEC.map((p, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: [0, 1.4, 1.1, 0], x: p.x, y: p.y }}
+          transition={{ duration: 1.0, delay: i * 0.045, ease: 'easeOut' }}
+          style={{ position: 'absolute', fontSize: '1rem', color: p.c, fontWeight: 900, transform: 'translate(-50%,-50%)' }}
+        >
+          {p.s}
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// ─── 곱셈 시각적 해설 ──────────────────────────────────────
+function MultiplicationSolution({
+  question,
+  theme,
+}: {
+  question: MathQuestion
+  theme: { name: string; emoji: string }
+}) {
+  const { language, t } = useI18n()
+  const { num1, num2, answer } = question
+
+  const [phase, setPhase] = useState<'idle' | 'groups' | 'counting' | 'result'>('idle')
+  const [confettiKey, setConfettiKey] = useState(0)
+  const [muted, setMuted] = useState(false)
+  const runningRef = useRef(false)
+  const mutedRef = useRef(false)
+  mutedRef.current = muted
+
+  const displayPerGroup = Math.min(num1, 9)
+  const displayGroups   = Math.min(num2, 9)
+  const cols = displayPerGroup <= 2 ? displayPerGroup : 3
+
+  // 언어별 TTS 문장 (이모지 없음)
+  const ttsIntro = language === 'ko'
+    ? `${theme.name} ${num1}개씩, 묶음이 ${num2}개 있어요!`
+    : t('solution.mulGroupsIntro', { num1, num2 })
+  const ttsCount = language === 'ko'
+    ? `${theme.name}이 모두 ${answer}개예요!`
+    : t('solution.mulCountAll', { answer })
+  const ttsFinal = language === 'ko'
+    ? `${num1} 곱하기 ${num2}는 ${answer}이에요!`
+    : t('solution.mulFinal', { num1, num2, answer })
+
+  function reset() {
+    runningRef.current = false
+    stopAll()
+    setPhase('idle')
+    setConfettiKey(0)
+  }
+
+  async function run() {
+    reset()
+    await delay(80)
+    runningRef.current = true
+    const m = mutedRef.current
+    const alive = () => runningRef.current
+
+    // 1. 묶음 전부 한번에 표시 + 설명
+    setPhase('groups')
+    await say(ttsIntro, m, language)
+    if (!alive()) return
+    await delay(500)
+
+    // 2. 합계 + 폭죽
+    setPhase('counting')
+    setConfettiKey(k => k + 1)
+    await say(ttsCount, m, language)
+    if (!alive()) return
+    await delay(300)
+
+    // 3. 정답 수식
+    setPhase('result')
+    await say(ttsFinal, m, language)
+  }
+
+  useEffect(() => {
+    run()
+    return () => { runningRef.current = false; stopAll() }
+  }, [question.id])
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 5, position: 'relative' }}>
+      {confettiKey > 0 && <ConfettiParticles key={confettiKey} />}
+
+      {/* 버튼 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); setMuted(v => !v) }}
+          style={{ background: muted ? 'rgba(255,118,118,0.15)' : 'rgba(167,139,250,0.15)', border: `2px solid ${muted ? 'rgba(255,118,118,0.4)' : 'rgba(167,139,250,0.4)'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: muted ? '#FF5555' : '#7B5FCC' }}>
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); run() }}
+          style={{ background: 'rgba(201,182,255,0.15)', border: '2px solid rgba(201,182,255,0.45)', borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: '#7B5FCC' }}>
+          {t('solution.replay')}
+        </motion.button>
+      </div>
+
+      {/* 수식 헤더 */}
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '7px 12px', borderRadius: 13, background: 'rgba(167,139,250,0.1)', border: '2px solid rgba(167,139,250,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2D2D3A' }}>{num1}</span>
+        <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#A78BFA' }}>×</span>
+        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2D2D3A' }}>{num2}</span>
+        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#7A7A9A' }}>=</span>
+        {phase === 'counting' || phase === 'result' ? (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 8 }}
+            style={{ fontSize: '1.65rem', fontWeight: 900, color: '#A78BFA' }}>{answer}</motion.span>
+        ) : (
+          <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#C8C8D8' }}>?</span>
+        )}
+      </div>
+
+      {/* 묶음 그리드 — 모두 한번에 등장 */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center', padding: '2px 2px 6px' }}>
+          {Array.from({ length: displayGroups }, (_, g) => (
+            <motion.div
+              key={g}
+              initial={{ opacity: 0, scale: 0.55, y: 20 }}
+              animate={{ opacity: phase !== 'idle' ? 1 : 0, scale: phase !== 'idle' ? 1 : 0.55, y: phase !== 'idle' ? 0 : 20 }}
+              transition={{ type: 'spring', damping: 14, stiffness: 240, delay: g * 0.05 }}
+              style={{ background: 'rgba(167,139,250,0.13)', border: '2px solid rgba(167,139,250,0.5)', borderRadius: 13, padding: '5px 7px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 48 }}
+            >
+              <div style={{ fontSize: '0.6rem', fontWeight: 900, color: '#7B5FCC' }}>묶음 {g + 1}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 1 }}>
+                {Array.from({ length: displayPerGroup }, (_, i) => (
+                  <span key={i} style={{ fontSize: '1.1rem', lineHeight: 1.1 }}>{theme.emoji}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#5B21B6', background: 'rgba(167,139,250,0.22)', borderRadius: 5, padding: '1px 5px' }}>{displayPerGroup}개</div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* 합계 배지 */}
+        {(phase === 'counting' || phase === 'result') && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.88 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', damping: 12 }}
+            style={{ textAlign: 'center', marginTop: 6, fontSize: '0.92rem', fontWeight: 900, color: '#7B5FCC' }}
+          >
+            {theme.emoji} 모두 <span style={{ fontSize: '1.35rem', color: '#A78BFA' }}>{answer}</span>개
+          </motion.div>
+        )}
+      </div>
+
+      {/* 정답 수식 */}
+      {phase === 'result' && (
+        <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 10 }}
+          style={{ flexShrink: 0, textAlign: 'center', padding: '9px', borderRadius: 13, background: 'rgba(167,139,250,0.16)', border: '2px solid rgba(167,139,250,0.42)', fontWeight: 900, fontSize: '1.15rem', color: '#5B21B6' }}>
+          {num1} × {num2} = <span style={{ fontSize: '1.55rem', color: '#A78BFA' }}>{answer}</span>
+        </motion.div>
+      )}
+    </div>
+  )
+}
+
+// ─── 나눗셈 시각적 해설 ─────────────────────────────────────
+function DivisionSolution({
+  question,
+  theme,
+}: {
+  question: MathQuestion
+  theme: { name: string; emoji: string }
+}) {
+  const { language, t } = useI18n()
+  const { num1, num2, answer } = question
+
+  const [phase, setPhase] = useState<'idle' | 'showing' | 'dividing' | 'result'>('idle')
+  const [shownResultGroups, setShownResultGroups] = useState(0)
+  const [confettiKey, setConfettiKey] = useState(0)
+  const [muted, setMuted] = useState(false)
+  const runningRef = useRef(false)
+  const mutedRef = useRef(false)
+  mutedRef.current = muted
+
+  const tens = Math.floor(num1 / 10)
+  const ones = num1 % 10
+  const displayGroups   = Math.min(num2, 9)
+  const displayPerGroup = Math.min(answer, 9)
+  const cols = displayPerGroup <= 2 ? displayPerGroup : 3
+
+  // 언어별 TTS 문장 (이모지 없음)
+  const ttsItemsStart = language === 'ko'
+    ? `${theme.name} ${num1}개가 있어요!`
+    : t('solution.divItemsStart', { num1 })
+  const ttsShareStart = language === 'ko'
+    ? `${num2}명이 똑같이 나눠 가져요!`
+    : t('solution.divShareStart', { num2 })
+  const ttsEachGroup = language === 'ko'
+    ? `한 명에게 ${answer}개씩이에요!`
+    : t('solution.divEachGroup', { answer })
+  const ttsFinal = language === 'ko'
+    ? `${num1} 나누기 ${num2}는 ${answer}이에요!`
+    : t('solution.divFinal', { num1, num2, answer })
+
+  function reset() {
+    runningRef.current = false
+    stopAll()
+    setPhase('idle')
+    setShownResultGroups(0)
+    setConfettiKey(0)
+  }
+
+  async function run() {
+    reset()
+    await delay(80)
+    runningRef.current = true
+    const m = mutedRef.current
+    const alive = () => runningRef.current
+
+    setPhase('showing')
+    await say(ttsItemsStart, m, language)
+    if (!alive()) return
+    await delay(600)
+
+    setPhase('dividing')
+    await say(ttsShareStart, m, language)
+    if (!alive()) return
+    await delay(300)
+
+    for (let i = 1; i <= displayGroups; i++) {
+      if (!alive()) return
+      setShownResultGroups(i)
+      await delay(300)
+    }
+
+    // 모든 묶음 채워졌을 때 폭죽
+    setConfettiKey(k => k + 1)
+    await say(ttsEachGroup, m, language)
+    if (!alive()) return
+    setPhase('result')
+    await say(ttsFinal, m, language)
+  }
+
+  useEffect(() => {
+    run()
+    return () => { runningRef.current = false; stopAll() }
+  }, [question.id])
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 5, position: 'relative' }}>
+      {confettiKey > 0 && <ConfettiParticles key={confettiKey} />}
+
+      {/* 버튼 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); setMuted(v => !v) }}
+          style={{ background: muted ? 'rgba(255,118,118,0.15)' : 'rgba(251,146,60,0.15)', border: `2px solid ${muted ? 'rgba(255,118,118,0.4)' : 'rgba(251,146,60,0.4)'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: muted ? '#FF5555' : '#EA580C' }}>
+          {muted ? t('solution.voiceOff') : t('solution.voiceOn')}
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { unlockTts(); run() }}
+          style={{ background: 'rgba(201,182,255,0.15)', border: '2px solid rgba(201,182,255,0.45)', borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', color: '#7B5FCC' }}>
+          {t('solution.replay')}
+        </motion.button>
+      </div>
+
+      {/* 수식 헤더 */}
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '7px 12px', borderRadius: 13, background: 'rgba(251,146,60,0.1)', border: '2px solid rgba(251,146,60,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2D2D3A' }}>{num1}</span>
+        <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#FB923C' }}>÷</span>
+        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2D2D3A' }}>{num2}</span>
+        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#7A7A9A' }}>=</span>
+        {phase === 'result' ? (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 8 }}
+            style={{ fontSize: '1.65rem', fontWeight: 900, color: '#FB923C' }}>{answer}</motion.span>
+        ) : (
+          <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#C8C8D8' }}>?</span>
+        )}
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+
+        {/* 1단계: 전체 아이템 (10묶음 + 낱개) */}
+        {phase !== 'idle' && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 13, background: 'rgba(98,214,178,0.1)', border: '2px solid rgba(98,214,178,0.4)' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#2A9A70', marginBottom: 5 }}>
+              {theme.emoji} 모두 {num1}개
+            </div>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+              {Array.from({ length: tens }, (_, i) => <TenBundle key={i} theme={theme} />)}
+              {Array.from({ length: ones }, (_, i) => <OneItem key={i} theme={theme} />)}
+            </div>
+          </motion.div>
+        )}
+
+        {/* 2단계: 나누기 안내 */}
+        {(phase === 'dividing' || phase === 'result') && (
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ flexShrink: 0, textAlign: 'center', fontWeight: 900, fontSize: '0.88rem', color: '#FB923C' }}>
+            ↓ ÷ {num2}명이 나눠 가져요
+          </motion.div>
+        )}
+
+        {/* 3단계: 결과 묶음 박스들 */}
+        {(phase === 'dividing' || phase === 'result') && (
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+              {Array.from({ length: displayGroups }, (_, g) => (
+                <motion.div key={g}
+                  animate={{ opacity: g < shownResultGroups ? 1 : 0.22, scale: g < shownResultGroups ? 1 : 0.88 }}
+                  transition={{ type: 'spring', damping: 13 }}
+                  style={{ background: g < shownResultGroups ? 'rgba(251,146,60,0.13)' : 'rgba(200,200,200,0.08)', border: `2px solid ${g < shownResultGroups ? 'rgba(251,146,60,0.5)' : 'rgba(200,200,200,0.28)'}`, borderRadius: 13, padding: '5px 7px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 48 }}>
+                  <div style={{ fontSize: '0.6rem', fontWeight: 900, color: '#EA580C' }}>{g + 1}번</div>
+                  {g < shownResultGroups ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 1 }}>
+                        {Array.from({ length: displayPerGroup }, (_, i) => (
+                          <span key={i} style={{ fontSize: '1.05rem', lineHeight: 1.1 }}>{theme.emoji}</span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#C2510C', background: 'rgba(251,146,60,0.22)', borderRadius: 5, padding: '1px 5px' }}>{displayPerGroup}개</div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '1.2rem', color: '#D0D0D8', fontWeight: 900, lineHeight: 1.6 }}>?</div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 정답 수식 */}
+      {phase === 'result' && (
+        <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 10 }}
+          style={{ flexShrink: 0, textAlign: 'center', padding: '9px', borderRadius: 13, background: 'rgba(251,146,60,0.15)', border: '2px solid rgba(251,146,60,0.42)', fontWeight: 900, fontSize: '1.15rem', color: '#C2510C' }}>
+          {num1} ÷ {num2} = <span style={{ fontSize: '1.55rem', color: '#FB923C' }}>{answer}</span>
+        </motion.div>
+      )}
     </div>
   )
 }

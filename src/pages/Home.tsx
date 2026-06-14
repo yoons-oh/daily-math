@@ -20,6 +20,7 @@ import { useI18n, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '../i18n'
 import { consumeAuthSelectedLanguage, SupportedLanguage } from '../lib/language'
 import { updateChildProfileLanguage, updateChildProfileLevel } from '../lib/childProfiles'
 import { useSubscription } from '../lib/subscription'
+import PushNotificationBanner from '../components/PushNotificationBanner'
 
 const CHAR_IMG: Record<string, string> = {
   rabbit: '/characters/rabbit.jpg',
@@ -444,6 +445,8 @@ export default function Home() {
               </div>
             </motion.section>
           )}
+
+          {profile && <PushNotificationBanner userId={profile.id} />}
 
           <section
             className="home-menu-grid"

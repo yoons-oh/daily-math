@@ -35,6 +35,18 @@ const CONCEPTS = [
       {desc:'십의 자리: 5 - 2 = 3', calc:'5 - 2 = 3', hl:'tens', showAns:false, carry:['⁵',''], voice:'다음은 십의 자리예요. 5 빼기 2는 3이에요.'},
       {desc:'정답은 38이에요! 🎉', calc:'62 - 24 = 38', hl:'all', showAns:true, carry:['⁵',''], voice:'그래서 62 빼기 24의 정답은 38이에요.'},
     ]},
+  { id:'mul-basic', title:'곱셈의 이해', image:'/concepts/study-mul-basic.png', emoji:'⭐', color:'linear-gradient(135deg,#A78BFA,#7C3AED)', shadow:'0 8px 0 #5B21B6', textColor:'#fff', op:'×', opColor:'#fff', n1:[0,3], n2:[0,4], ans:[1,2],
+    steps:[
+      {desc:'3×4는 3을 4번 더하는 거예요!', calc:'3 + 3 + 3 + 3', hl:'', showAns:false, carry:['',''], voice:'3 곱하기 4는 3을 네 번 더하는 거예요.'},
+      {desc:'3, 6, 9, 12 — 하나씩 세어봐요!', calc:'3 → 6 → 9 → 12', hl:'', showAns:false, carry:['',''], voice:'3, 6, 9, 12, 하나씩 세어볼까요?'},
+      {desc:'3×4=12 정답이에요! 🎉', calc:'3 × 4 = 12', hl:'all', showAns:true, carry:['',''], voice:'그래서 3 곱하기 4의 정답은 12예요!'},
+    ]},
+  { id:'div-basic', title:'나누기의 이해', image:'/concepts/study-div-basic.png', emoji:'🔮', color:'linear-gradient(135deg,#FBA44B,#F97316)', shadow:'0 8px 0 #C2510C', textColor:'#fff', op:'÷', opColor:'#fff', n1:[1,2], n2:[0,3], ans:[0,4],
+    steps:[
+      {desc:'12를 3명이 똑같이 나눠요!', calc:'12 ÷ 3 = ?', hl:'', showAns:false, carry:['',''], voice:'12를 3명이 똑같이 나눠볼게요.'},
+      {desc:'3×?=12 → 구구단에서 찾아요!', calc:'3 × 4 = 12', hl:'', showAns:false, carry:['',''], voice:'3 곱하기 얼마가 12인지 구구단으로 찾아요.'},
+      {desc:'한 명에게 4개씩! 12÷3=4 🎉', calc:'12 ÷ 3 = 4', hl:'all', showAns:true, carry:['',''], voice:'그래서 12 나누기 3의 정답은 4예요!'},
+    ]},
 ]
 
 function getConceptTitleKey(id: string) {
@@ -42,16 +54,23 @@ function getConceptTitleKey(id: string) {
   if (id === 'add-carry') return 'concept.addCarry'
   if (id === 'sub-basic') return 'concept.subBasic'
   if (id === 'sub-borrow') return 'concept.subBorrow'
+  if (id === 'mul-basic') return 'concept.mulBasic'
+  if (id === 'div-basic') return 'concept.divBasic'
+  if (id === 'times-table') return 'concept.timesTable'
   return 'concept.title'
 }
 
-function getConceptCardTextStyle(id: string, textColor: string): React.CSSProperties {
+function getConceptCardTextStyle(id: string, textColor: string, language?: string): React.CSSProperties {
   const topByConcept: Record<string, string> = {
     'add-basic': '79%',
     'add-carry': '79%',
     'sub-basic': '76%',
     'sub-borrow': '76%',
+    'mul-basic': '86%',
+    'div-basic': '86%',
+    'times-table': '86%',
   }
+  const isLongLang = language === 'en' || language === 'id' || language === 'es'
 
   return {
     position:'absolute',
@@ -61,7 +80,7 @@ function getConceptCardTextStyle(id: string, textColor: string): React.CSSProper
     transform:'translateY(-50%)',
     color:textColor,
     fontWeight:900,
-    fontSize:'clamp(0.78rem, 2.3vw, 1.05rem)',
+    fontSize: isLongLang ? 'clamp(0.64rem, 2.0vw, 0.92rem)' : 'clamp(0.78rem, 2.3vw, 1.05rem)',
     lineHeight:1.15,
     textAlign:'center',
     textShadow:textColor === '#fff' ? '0 2px 8px rgba(0,0,0,0.25)' : 'none',
@@ -71,7 +90,7 @@ function getConceptCardTextStyle(id: string, textColor: string): React.CSSProper
 
 export default function ConceptPage() {
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const [selected, setSelected] = useState<typeof CONCEPTS[0] | null>(null)
   const [step, setStep] = useState(0)
 
@@ -94,87 +113,113 @@ export default function ConceptPage() {
             style={{ width: 42, height: 42, borderRadius: 14, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', border: '1.5px solid rgba(255,255,255,0.9)', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 3px 10px rgba(0,0,0,0.08)' }}>←</motion.button>
           <h1 style={{ fontWeight: 900, fontSize: '1.2rem', color: '#2D2D3A' }}>🔮 {t('concept.title')}</h1>
         </div>
-        <p style={{ color: '#7A7A9A', marginBottom: 16, fontWeight: 600, fontSize: '0.9rem' }}>{t('concept.prompt')}</p>
-        <div className="grid grid-cols-2 gap-3">
-          {CONCEPTS.map((c, i) => (
-            <motion.button
-              key={c.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              whileTap={{ scale: 0.94, y: 5 }}
-              onClick={() => selectConcept(c)}
-              style={{
-                background: c.color, borderRadius: 22, padding: 0,
-                border: '2px solid rgba(255,255,255,0.85)', cursor: 'pointer', textAlign: 'left',
-                aspectRatio: '1 / 1',
-                boxShadow: c.shadow + ', 0 12px 26px rgba(0,0,0,0.12)',
-                position: 'relative', overflow: 'hidden',
-              }}
-            >
-              <img
-                src={c.image}
-                alt={t(getConceptTitleKey(c.id))}
-                style={{
-                  width:'100%', height:'100%', display:'block', objectFit:'cover',
-                  pointerEvents:'none',
-                }}
-              />
-              <div style={{
-                position:'absolute', inset:0,
-                boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 -18px 24px rgba(255,255,255,0.08)',
-                pointerEvents:'none',
-              }} />
-              <div
-                style={getConceptCardTextStyle(c.id, c.textColor)}
-              >
-                {t(getConceptTitleKey(c.id))}
-              </div>
-            </motion.button>
+        <p style={{ color: '#7A7A9A', marginBottom: 12, fontWeight: 600, fontSize: '0.9rem' }}>{t('concept.prompt')}</p>
+
+        {/* 덧셈·뺄셈 섹션 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1, height: 1.5, background: 'linear-gradient(90deg,rgba(98,214,178,0.4),transparent)' }} />
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#62D6B2', whiteSpace: 'nowrap' }}>{t('concept.sectionAddSub')}</span>
+          <div style={{ flex: 1, height: 1.5, background: 'linear-gradient(270deg,rgba(98,214,178,0.4),transparent)' }} />
+        </div>
+        <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 16 }}>
+          {CONCEPTS.slice(0, 4).map((c, i) => (
+            <ConceptCard key={c.id} c={c} i={i} t={t} language={language} onSelect={selectConcept} getConceptTitleKey={getConceptTitleKey} getConceptCardTextStyle={getConceptCardTextStyle} />
           ))}
         </div>
 
-        {/* 구구단 배우기 버튼 */}
-        <motion.button
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36 }}
-          whileTap={{ scale: 0.96, y: 5 }}
-          onClick={() => navigate('/times-table')}
-          style={{
-            marginTop: 12, width: '100%', borderRadius: 22, padding: 0,
-            border: '2px solid rgba(255,255,255,0.85)', cursor: 'pointer',
-            aspectRatio: '2.5 / 1',
-            background: 'linear-gradient(135deg,#A78BFA 0%,#7C3AED 100%)',
-            boxShadow: '0 8px 0 #5B21B6, 0 12px 26px rgba(167,139,250,0.38)',
-            position: 'relative', overflow: 'hidden',
-          }}
-        >
-          <img
-            src="/concepts/study-times-table.png"
-            alt={t('concept.timesTable')}
-            style={{ width:'100%', height:'100%', display:'block', objectFit:'cover', objectPosition:'center', pointerEvents:'none' }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div style={{
-            position:'absolute', inset:0,
-            boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.5)',
-            pointerEvents:'none',
-          }} />
-          <div style={{
-            position:'absolute', right:'6%', bottom:'14%',
-            color:'#fff', fontWeight:900,
-            fontSize:'clamp(0.9rem, 2.8vw, 1.2rem)',
-            textShadow:'0 2px 8px rgba(0,0,0,0.3)',
-            textAlign:'center', pointerEvents:'none',
-          }}>
-            <div style={{ fontSize:'1.4rem', marginBottom:2 }}>⭐</div>
-            {t('concept.timesTable')}
-          </div>
-        </motion.button>
+        {/* 곱셈·나누기 섹션 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1, height: 1.5, background: 'linear-gradient(90deg,rgba(167,139,250,0.4),transparent)' }} />
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#7C3AED', whiteSpace: 'nowrap' }}>{t('concept.sectionMulDiv')}</span>
+          <div style={{ flex: 1, height: 1.5, background: 'linear-gradient(270deg,rgba(167,139,250,0.4),transparent)' }} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {CONCEPTS.slice(4).map((c, i) => (
+            <ConceptCard key={c.id} c={c} i={i} t={t} language={language} onSelect={selectConcept} getConceptTitleKey={getConceptTitleKey} getConceptCardTextStyle={getConceptCardTextStyle} />
+          ))}
+          {/* 구구단 배우기 — 같은 그리드 카드 스타일 */}
+          <TimesTableCard t={t} language={language} navigate={navigate} getConceptCardTextStyle={getConceptCardTextStyle} />
+        </div>
       </div>
       <BottomNav />
     </div>
+  )
+}
+
+function TimesTableCard({ t, language, navigate, getConceptCardTextStyle }: {
+  t: (key: string) => string
+  language: string
+  navigate: ReturnType<typeof useNavigate>
+  getConceptCardTextStyle: (id: string, textColor: string, language?: string) => React.CSSProperties
+}) {
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.16 }}
+      whileTap={{ scale: 0.94, y: 5 }}
+      onClick={() => navigate('/times-table')}
+      style={{
+        background: 'linear-gradient(135deg,#A78BFA,#7C3AED)',
+        borderRadius: 22, padding: 0,
+        border: '2px solid rgba(255,255,255,0.85)', cursor: 'pointer',
+        aspectRatio: '1 / 1',
+        boxShadow: '0 8px 0 #5B21B6, 0 12px 26px rgba(167,139,250,0.38)',
+        position: 'relative', overflow: 'hidden',
+      }}
+    >
+      <img
+        src="/concepts/study-times-table.png"
+        alt={t('concept.timesTable')}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+        style={{ width:'100%', height:'100%', display:'block', objectFit:'cover', pointerEvents:'none' }}
+      />
+      <div style={{ position:'absolute', inset:0, boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 -18px 24px rgba(255,255,255,0.08)', pointerEvents:'none' }} />
+      <div style={getConceptCardTextStyle('times-table', '#fff', language)}>
+        {t('concept.timesTable')}
+      </div>
+    </motion.button>
+  )
+}
+
+function ConceptCard({ c, i, t, language, onSelect, getConceptTitleKey, getConceptCardTextStyle }: {
+  c: typeof CONCEPTS[0]; i: number;
+  t: (key: string) => string;
+  language: string;
+  onSelect: (c: typeof CONCEPTS[0]) => void;
+  getConceptTitleKey: (id: string) => string;
+  getConceptCardTextStyle: (id: string, textColor: string, language?: string) => React.CSSProperties;
+}) {
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.08 }}
+      whileTap={{ scale: 0.94, y: 5 }}
+      onClick={() => onSelect(c)}
+      style={{
+        background: c.color, borderRadius: 22, padding: 0,
+        border: '2px solid rgba(255,255,255,0.85)', cursor: 'pointer', textAlign: 'left',
+        aspectRatio: '1 / 1',
+        boxShadow: c.shadow + ', 0 12px 26px rgba(0,0,0,0.12)',
+        position: 'relative', overflow: 'hidden',
+      }}
+    >
+      <img
+        src={c.image}
+        alt={t(getConceptTitleKey(c.id))}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+        style={{ width:'100%', height:'100%', display:'block', objectFit:'cover', pointerEvents:'none' }}
+      />
+      <div style={{
+        position:'absolute', inset:0,
+        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 -18px 24px rgba(255,255,255,0.08)',
+        pointerEvents:'none',
+      }} />
+      <div style={getConceptCardTextStyle(c.id, c.textColor, language)}>
+        {t(getConceptTitleKey(c.id))}
+      </div>
+    </motion.button>
   )
 }
 

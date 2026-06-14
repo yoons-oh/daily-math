@@ -148,38 +148,40 @@ export default function TimesTableTestPage() {
                 {/* 문제 카드 */}
                 <div style={{
                   flex: 1, borderRadius: 24, display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', gap: 12,
+                  alignItems: 'center', justifyContent: 'center', gap: 14,
                   background: 'rgba(255,255,255,0.88)',
                   boxShadow: '0 8px 0 rgba(180,83,9,0.14), 0 14px 28px rgba(251,191,36,0.16)',
                   border: '2px solid rgba(251,191,36,0.3)',
                 }}>
-                  <div style={{ fontWeight: 900, fontSize: 'clamp(2rem,7vw,2.8rem)', color: '#2D2D3A', letterSpacing: 2 }}>
-                    {dan} × {q.factor} =
+                  {/* 수식 + 입력칸 한 줄 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'nowrap' }}>
+                    <span style={{ fontWeight: 900, fontSize: 'clamp(1.8rem,6vw,2.5rem)', color: '#2D2D3A', letterSpacing: 2, whiteSpace: 'nowrap' }}>
+                      {dan} × {q.factor} =
+                    </span>
+                    <motion.div
+                      animate={phase === 'feedback' ? { scale: [1, 1.15, 1] } : {}}
+                      style={{
+                        minWidth: 80, minHeight: 54, borderRadius: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: phase === 'feedback'
+                          ? isCorrect ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.12)'
+                          : 'rgba(251,191,36,0.12)',
+                        border: `2.5px solid ${
+                          phase === 'feedback'
+                            ? isCorrect ? '#34D399' : '#F87171'
+                            : digits.length > 0 ? '#FBBF24' : 'rgba(251,191,36,0.3)'
+                        }`,
+                        fontWeight: 900,
+                        fontSize: 'clamp(1.6rem,5.5vw,2.2rem)',
+                        color: phase === 'feedback'
+                          ? isCorrect ? '#059669' : '#DC2626'
+                          : digits.length > 0 ? '#B45309' : '#D1A050',
+                        paddingInline: 16,
+                      }}
+                    >
+                      {phase === 'feedback' ? q.product : displayVal}
+                    </motion.div>
                   </div>
-
-                  {/* 입력 표시 */}
-                  <motion.div
-                    animate={phase === 'feedback' ? { scale: [1, 1.15, 1] } : {}}
-                    style={{
-                      minWidth: 90, minHeight: 58, borderRadius: 18,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: phase === 'feedback'
-                        ? isCorrect ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.12)'
-                        : 'rgba(251,191,36,0.12)',
-                      border: `2.5px solid ${
-                        phase === 'feedback'
-                          ? isCorrect ? '#34D399' : '#F87171'
-                          : digits.length > 0 ? '#FBBF24' : 'rgba(251,191,36,0.3)'
-                      }`,
-                      fontWeight: 900,
-                      fontSize: 'clamp(1.8rem,6vw,2.4rem)',
-                      color: phase === 'feedback'
-                        ? isCorrect ? '#059669' : '#DC2626'
-                        : digits.length > 0 ? '#B45309' : '#D1A050',
-                    }}
-                  >
-                    {phase === 'feedback' ? q.product : displayVal}
-                  </motion.div>
 
                   {/* 피드백 메시지 */}
                   <AnimatePresence>
